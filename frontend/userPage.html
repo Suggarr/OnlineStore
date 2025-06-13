@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Профиль пользователя</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      height: 100%;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background-color: #4CAF50;
+      color: white;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    header h1 {
+      font-size: 24px;
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+      margin-left: 20px;
+      font-size: 16px;
+    }
+    .main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 50px 20px;
+    }
+    .profile-container {
+      max-width: 600px;
+      width: 100%;
+      background-color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .profile-container h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+    .profile-info p {
+      font-size: 18px;
+      margin: 10px 0;
+    }
+    .profile-info span {
+      font-weight: bold;
+    }
+    .edit-btn, .reset-pass-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      background-color: #4CAF50;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    .edit-btn:hover, .reset-pass-btn:hover {
+      background-color: #45a049;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+      position: relative;
+    }
+    .modal-content .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 24px;
+      background-color: #e60000;
+      color: white;
+      font-weight: bold;
+      border: none;   
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .modal-content .close-btn:hover {
+      background-color: #b50101;
+    }
+    .modal-content h3 {
+      margin-bottom: 15px;
+    }
+    .modal-content input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    .modal-content button {
+      padding: 10px 20px;
+      margin-top: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .modal-content button:hover {
+      background-color: #45a049;
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      background-color: #eee;
+      font-size: 14px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>MyShop</h1>
+    <nav>
+      <a href="index.html">Главная</a>
+      <a href="#">Каталог</a>
+      <a href="#">Корзина</a>
+      <a href="#">Профиль</a>
+    </nav>
+  </header>
+
+  <div class="main">
+    <div class="profile-container">
+      <h2>Профиль пользователя</h2>
+      <div class="profile-info">
+        <p><span>Имя:</span> <span id="displayFirstName">Иван</span></p>
+        <p><span>Фамилия:</span> <span id="displayLastName">Иванов</span></p>
+        <p><span>Email:</span> <span id="displayEmail">ivan@example.com</span></p>
+        <p><span>Дата регистрации:</span> 10 января 2024</p>
+        <p><span>Количество заказов:</span> 5</p>
+      </div>
+      <button class="edit-btn" onclick="openModal()">Редактировать</button>
+      <button class="reset-pass-btn" onclick="openPasswordModal()">Изменить пароль</button>
+    </div>
+  </div>
+
+  <div class="modal" id="editModal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+      <h3>Редактировать профиль</h3>
+      <input type="text" id="firstNameInput" placeholder="Имя" value="Иван" />
+      <input type="text" id="lastNameInput" placeholder="Фамилия" value="Иванов" />
+      <input type="email" id="emailInput" placeholder="Email" value="ivan@example.com" />
+      <button onclick="saveChanges()">Сохранить</button>
+    </div>
+  </div>
+
+  <div class="modal" id="passwordModal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeModal()">&times;</button>
+      <h3>Изменить пароль</h3>
+      <input type="password" id="newPassword" placeholder="Новый пароль" />
+      <input type="password" id="confirmPassword" placeholder="Подтвердите пароль" />
+      <button onclick="changePassword()">Изменить</button>
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2025 MyShop — Все права защищены
+  </footer>
+
+  <script>
+    function openModal() {
+      document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('editModal').style.display = 'none';
+      document.getElementById('passwordModal').style.display = 'none';
+    }
+
+    function saveChanges() {
+      const newFirstName = document.getElementById('firstNameInput').value;
+      const newLastName = document.getElementById('lastNameInput').value;
+      const newEmail = document.getElementById('emailInput').value;
+
+      document.getElementById('displayFirstName').textContent = newFirstName;
+      document.getElementById('displayLastName').textContent = newLastName;
+      document.getElementById('displayEmail').textContent = newEmail;
+
+      closeModal();
+    }
+
+    function openPasswordModal() {
+      document.getElementById('passwordModal').style.display = 'flex';
+    }
+
+    function changePassword() {
+      const newPass = document.getElementById('newPassword').value;
+      const confirmPass = document.getElementById('confirmPassword').value;
+
+      if (!newPass || !confirmPass) {
+        alert('Пожалуйста, заполните оба поля.');
+        return;
+      }
+
+      if (newPass !== confirmPass) {
+        alert('Пароли не совпадают.');
+        return;
+      }
+
+      alert('Пароль успешно изменён.');
+      closeModal();
+    }
+  </script>
+</body>
+</html>
