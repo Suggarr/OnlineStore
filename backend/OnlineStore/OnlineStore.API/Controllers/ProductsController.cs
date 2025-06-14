@@ -35,7 +35,7 @@ public class ProductsController : ControllerBase
     }
 
     // GET: api/Products/{id}
-    [HttpGet("{id}")]
+    [HttpGet("{id:guid}")]
     public async Task<ActionResult<ProductDto>> GetById(Guid id)
     {
         var product = await _productRepository.GetByIdAsync(id);
@@ -57,8 +57,12 @@ public class ProductsController : ControllerBase
 
     // POST: api/Products
     [HttpPost]
-    public async Task<ActionResult<ProductDto>> Create(CreateProductDto dto)
+    public async Task<IActionResult> Create([FromBody] CreateProductDto dto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        // Преобразование DTO → Entity
         var product = new Product
         {
             Id = Guid.NewGuid(),
@@ -69,23 +73,18 @@ public class ProductsController : ControllerBase
         };
 
         await _productRepository.AddAsync(product);
-
-        var resultDto = new ProductDto
-        {
-            Id = product.Id,
-            Name = product.Name,
-            Description = product.Description,
-            Price = product.Price,
-            ImageUrl = product.ImageUrl
-        };
-
-        return CreatedAtAction(nameof(GetById), new { id = resultDto.Id }, resultDto);
+        return Ok(product);
+        //return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
+        
     }
 
     // PUT: api/Products/{id}
-    [HttpPut("{id}")]
+    [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, UpdateProductDto dto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var existing = await _productRepository.GetByIdAsync(id);
 
         if (existing == null)
@@ -99,12 +98,12 @@ public class ProductsController : ControllerBase
 
         await _productRepository.UpdateAsync(existing);
 
-        return NoContent();
+        return Ok(id);
     }
 
 
     // DELETE: api/Products/{id}
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var product = await _productRepository.GetByIdAsync(id);
@@ -113,6 +112,6 @@ public class ProductsController : ControllerBase
             return NotFound();
 
         await _productRepository.DeleteAsync(id);
-        return NoContent();
+        return Ok(id);
     }
 }

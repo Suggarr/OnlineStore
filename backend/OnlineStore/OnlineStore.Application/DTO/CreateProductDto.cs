@@ -1,10 +1,21 @@
-﻿namespace OnlineStore.Application.DTO
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace OnlineStore.Application.DTO;
+
+public class CreateProductDto
 {
-    public class CreateProductDto
-    {
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public decimal Price { get; set; }
-        public string ImageUrl { get; set; }
-    }
+    [Required]
+    [MaxLength(100)]
+    public string Name { get; set; } = default!;
+
+    [Required]
+    [MaxLength(500)]
+    public string Description { get; set; } = default!;
+
+    [Range(0.01, 100000)]
+    public decimal Price { get; set; }
+
+    [Required]
+    [Url]
+    public string ImageUrl { get; set; } = default!;
 }
