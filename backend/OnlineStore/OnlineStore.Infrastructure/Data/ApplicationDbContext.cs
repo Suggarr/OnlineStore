@@ -9,16 +9,16 @@ namespace OnlineStore.Infrastructure.Data
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options) { }
 
-        public DbSet<Product> Products => Set<Product>();
+        public DbSet<Product> Products { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfiguration(new ProductConfiguration());
+            modelBuilder.ApplyConfiguration(new CartItemConfiguration());
 
             base.OnModelCreating(modelBuilder);
         }
-
-
     }
 
 }

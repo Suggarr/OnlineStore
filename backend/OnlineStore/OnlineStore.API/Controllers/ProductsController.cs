@@ -80,7 +80,7 @@ public class ProductsController : ControllerBase
 
     // PUT: api/Products/{id}
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, UpdateProductDto dto)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
