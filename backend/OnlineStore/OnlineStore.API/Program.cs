@@ -3,6 +3,7 @@ using OnlineStore.Infrastructure.Data;
 using OnlineStore.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System;
+using OnlineStore.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Регистрация репозитория
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+
 
 var app = builder.Build();
 // Configure the HTTP request pipeline.

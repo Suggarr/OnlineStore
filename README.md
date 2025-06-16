@@ -1,1 +1,1 @@
-# onlineStore
+# Разработка интернет-магазина с использованием ASP NET Core Web API
