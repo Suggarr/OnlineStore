@@ -21,6 +21,5 @@ namespace OnlineStore.Application.DTO
         [MinLength(6, ErrorMessage = "Пароль должен содержать минимум 6 символов.")]
         public string Password { get; set; } = string.Empty;
 
-        //public string Role { get; set; } = UserRole.User.ToString(); // по умолчанию обычный пользователь
     }
 }

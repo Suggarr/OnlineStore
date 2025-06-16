@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using OnlineStore.Application.DTO;
 using OnlineStore.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using OnlineStore.Domain.Enums;
 
 namespace OnlineStore.API.Controllers
@@ -18,6 +19,7 @@ namespace OnlineStore.API.Controllers
         }
 
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegisterUserDto dto)
         {
             if (!ModelState.IsValid)
@@ -31,6 +33,7 @@ namespace OnlineStore.API.Controllers
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginUserDto dto)
         {
             if (!ModelState.IsValid)
@@ -43,6 +46,7 @@ namespace OnlineStore.API.Controllers
             return Ok(user);
         }
 
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
@@ -53,6 +57,7 @@ namespace OnlineStore.API.Controllers
             return Ok(user);
         }
 
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -60,6 +65,7 @@ namespace OnlineStore.API.Controllers
             return Ok(users);
         }
 
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDto dto)
         {
@@ -73,6 +79,7 @@ namespace OnlineStore.API.Controllers
             return NoContent();
         }
 
+        [Authorize]
         [HttpPut("{id}/password")]
         public async Task<IActionResult> UpdatePassword(Guid id, [FromBody] string newPassword)
         {
@@ -86,6 +93,7 @@ namespace OnlineStore.API.Controllers
             return NoContent();
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}/role")]
         public async Task<IActionResult> ChangeRole(Guid id, [FromBody] UpdateUserRoleDto dto)
         {
@@ -96,6 +104,7 @@ namespace OnlineStore.API.Controllers
             return NoContent();
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {

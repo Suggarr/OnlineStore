@@ -6,7 +6,7 @@ namespace OnlineStore.Application.Interfaces
     public interface IUserService
     {
         Task<UserDto?> RegisterAsync(RegisterUserDto dto);
-        Task<UserDto?> LoginAsync(LoginUserDto dto);
+        Task<AuthResponseDto?> LoginAsync(LoginUserDto dto);
         Task<UserDto?> GetByIdAsync(Guid id);
         Task<IEnumerable<UserDto>> GetAllAsync();
         Task<bool> UpdateAsync(Guid id, UpdateUserDto dto);

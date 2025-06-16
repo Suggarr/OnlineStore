@@ -3,17 +3,19 @@ using OnlineStore.Application.Interfaces;
 using OnlineStore.Domain.Entities;
 using OnlineStore.Domain.Enums;
 
-namespace OnlineStore.Application.Services;
+namespace OnlineStore.Infrastructure.Services;
 
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IJwtTokenService _jwtTokenService;
 
-    public UserService(IUserRepository userRepository, IPasswordHasher passwordHasher)
+    public UserService(IUserRepository userRepository, IPasswordHasher passwordHasher, IJwtTokenService jwtTokenService)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
+        _jwtTokenService = jwtTokenService;
     }
 
     public async Task<UserDto?> RegisterAsync(RegisterUserDto dto)
@@ -43,7 +45,7 @@ public class UserService : IUserService
         };
     }
 
-    public async Task<UserDto?> LoginAsync(LoginUserDto dto)
+    public async Task<AuthResponseDto?> LoginAsync(LoginUserDto dto)
     {
         var user = await _userRepository.GetByEmailAsync(dto.Email);
         if (user == null) return null;
@@ -51,14 +53,21 @@ public class UserService : IUserService
         var isPasswordValid = await _passwordHasher.VerifyPassword(user.PasswordHash, dto.Password);
         if (!isPasswordValid) return null;
 
-        return new UserDto
+        var token = _jwtTokenService.GenerateToken(user);
+
+        return new AuthResponseDto
         {
-            Id = user.Id,
-            Username = user.UserName,
-            Email = user.Email,
-            Role = user.Role.ToString()
+            Token = token,
+            User = new UserDto
+            {
+                Id = user.Id,
+                Username = user.UserName,
+                Email = user.Email,
+                Role = user.Role.ToString()
+            }
         };
     }
+
 
     public async Task<UserDto?> GetByIdAsync(Guid id)
     {
