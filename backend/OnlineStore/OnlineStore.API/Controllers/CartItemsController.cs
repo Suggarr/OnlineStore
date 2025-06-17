@@ -9,7 +9,7 @@ namespace OnlineStore.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]  // Теперь всё требует авторизации
+[Authorize]
 public class CartItemsController : ControllerBase
 {
     private readonly ICartRepository _cartRepository;
@@ -21,7 +21,6 @@ public class CartItemsController : ControllerBase
         _productRepository = productRepository;
     }
 
-    // Получаем userId из JWT
     private Guid GetUserId()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -30,7 +29,6 @@ public class CartItemsController : ControllerBase
 
         return Guid.Parse(userIdClaim);
     }
-
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<CartItemDto>>> GetAll()
@@ -42,10 +40,10 @@ public class CartItemsController : ControllerBase
         {
             Id = item.Id,
             ProductId = item.ProductId,
-            ProductName = item.ProductName,
-            Price = item.Price,
-            Quantity = item.Quantity,
-            ImageUrl = item.ImageUrl
+            ProductName = item.Product.Name,
+            Price = item.Product.Price,
+            ImageUrl = item.Product.ImageUrl,
+            Quantity = item.Quantity
         });
 
         return Ok(result);
@@ -62,10 +60,7 @@ public class CartItemsController : ControllerBase
         var cartItem = new CartItem
         {
             ProductId = product.Id,
-            ProductName = product.Name,
-            Price = product.Price,
             Quantity = dto.Quantity,
-            ImageUrl = product.ImageUrl,
             UserId = userId
         };
 
@@ -85,21 +80,13 @@ public class CartItemsController : ControllerBase
         {
             Id = item.Id,
             ProductId = item.ProductId,
-            ProductName = item.ProductName,
-            Price = item.Price,
-            Quantity = item.Quantity,
-            ImageUrl = item.ImageUrl
+            ProductName = item.Product.Name,
+            Price = item.Product.Price,
+            ImageUrl = item.Product.ImageUrl,
+            Quantity = item.Quantity
         };
 
         return Ok(dto);
-    }
-
-    [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id)
-    {
-        var userId = GetUserId();
-        await _cartRepository.DeleteAsync(id, userId);
-        return NoContent();
     }
 
     [HttpPut("{id:guid}/quantity")]
@@ -107,6 +94,14 @@ public class CartItemsController : ControllerBase
     {
         var userId = GetUserId();
         await _cartRepository.UpdateQuantityAsync(id, dto.Quantity, userId);
+        return NoContent();
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var userId = GetUserId();
+        await _cartRepository.DeleteAsync(id, userId);
         return NoContent();
     }
 

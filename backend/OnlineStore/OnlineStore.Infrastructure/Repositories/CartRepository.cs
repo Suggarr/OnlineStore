@@ -4,7 +4,7 @@ using OnlineStore.Domain.Entities;
 using OnlineStore.Infrastructure.Data;
 
 namespace OnlineStore.Infrastructure.Repositories
-{ 
+{
     public class CartRepository : ICartRepository
     {
         private readonly ApplicationDbContext _context;
@@ -17,6 +17,7 @@ namespace OnlineStore.Infrastructure.Repositories
         public async Task<IEnumerable<CartItem>> GetAllForUserAsync(Guid userId)
         {
             return await _context.CartItems
+                .Include(c => c.Product)
                 .AsNoTracking()
                 .Where(c => c.UserId == userId)
                 .ToListAsync();
@@ -25,6 +26,7 @@ namespace OnlineStore.Infrastructure.Repositories
         public async Task<CartItem?> GetByIdAsync(Guid id, Guid userId)
         {
             return await _context.CartItems
+                .Include(c => c.Product)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
         }

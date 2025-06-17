@@ -20,6 +20,6 @@ namespace OnlineStore.Domain.Entities
         public UserRole Role { get; set; } = UserRole.User;
 
         public ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
-        //public ICollection<Order> Orders { get; set; } = new List<Order>(); Пока я не добавил
+        //public ICollection<Order> Orders { get; set; } = new List<Order>();
     }
 }
