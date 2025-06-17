@@ -11,6 +11,9 @@
 
         public string? ImageUrl { get; set; }          // URL изображения для отображения
 
-        public Product Product { get; set; }
+        public Guid UserId { get; set; }  // Связь с пользователем
+
+        public Product Product { get; set; } = default!;
+        public User User { get; set; } = default!;
     }
 }

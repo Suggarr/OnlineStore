@@ -1,13 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using OnlineStore.Application.DTO;
 using OnlineStore.Application.Interfaces;
 using OnlineStore.Domain.Entities;
-using OnlineStore.Infrastructure.Repositories;
+using System.Security.Claims;
 
 namespace OnlineStore.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]  // Теперь всё требует авторизации
 public class CartItemsController : ControllerBase
 {
     private readonly ICartRepository _cartRepository;
@@ -19,10 +21,22 @@ public class CartItemsController : ControllerBase
         _productRepository = productRepository;
     }
 
+    // Получаем userId из JWT
+    private Guid GetUserId()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null)
+            throw new Exception("User ID claim not found");
+
+        return Guid.Parse(userIdClaim);
+    }
+
+
     [HttpGet]
     public async Task<ActionResult<IEnumerable<CartItemDto>>> GetAll()
     {
-        var items = await _cartRepository.GetAllAsync();
+        var userId = GetUserId();
+        var items = await _cartRepository.GetAllForUserAsync(userId);
 
         var result = items.Select(item => new CartItemDto
         {
@@ -40,6 +54,7 @@ public class CartItemsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> AddToCart(CreateCartItemDto dto)
     {
+        var userId = GetUserId();
         var product = await _productRepository.GetByIdAsync(dto.ProductId);
         if (product is null)
             return NotFound("Продукт не найден");
@@ -50,24 +65,25 @@ public class CartItemsController : ControllerBase
             ProductName = product.Name,
             Price = product.Price,
             Quantity = dto.Quantity,
-            ImageUrl = product.ImageUrl
+            ImageUrl = product.ImageUrl,
+            UserId = userId
         };
 
         await _cartRepository.AddAsync(cartItem);
-
         return Ok();
     }
-
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<CartItemDto>> GetById(Guid id)
     {
-        var item = await _cartRepository.GetByIdAsync(id);
+        var userId = GetUserId();
+        var item = await _cartRepository.GetByIdAsync(id, userId);
         if (item is null)
             return NotFound();
 
         var dto = new CartItemDto
         {
+            Id = item.Id,
             ProductId = item.ProductId,
             ProductName = item.ProductName,
             Price = item.Price,
@@ -81,21 +97,24 @@ public class CartItemsController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        await _cartRepository.DeleteAsync(id);
+        var userId = GetUserId();
+        await _cartRepository.DeleteAsync(id, userId);
         return NoContent();
     }
 
     [HttpPut("{id:guid}/quantity")]
     public async Task<IActionResult> UpdateQuantity(Guid id, [FromBody] UpdateCartItemQuantityDto dto)
     {
-        await _cartRepository.UpdateQuantityAsync(id, dto.Quantity);
+        var userId = GetUserId();
+        await _cartRepository.UpdateQuantityAsync(id, dto.Quantity, userId);
         return NoContent();
     }
 
-    [HttpDelete]
+    [HttpDelete("clear")]
     public async Task<IActionResult> Clear()
     {
-        await _cartRepository.ClearAsync();
+        var userId = GetUserId();
+        await _cartRepository.ClearAsync(userId);
         return NoContent();
     }
 }

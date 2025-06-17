@@ -3,56 +3,63 @@ using OnlineStore.Application.Interfaces;
 using OnlineStore.Domain.Entities;
 using OnlineStore.Infrastructure.Data;
 
-namespace OnlineStore.Infrastructure.Repositories;
-
-public class CartRepository : ICartRepository
-{
-    private readonly ApplicationDbContext _context;
-
-    public CartRepository(ApplicationDbContext context)
+namespace OnlineStore.Infrastructure.Repositories
+{ 
+    public class CartRepository : ICartRepository
     {
-        _context = context;
-    }
+        private readonly ApplicationDbContext _context;
 
-    public async Task<IEnumerable<CartItem>> GetAllAsync()
-    {
-        return await _context.CartItems.ToListAsync();
-    }
-
-    public async Task<CartItem?> GetByIdAsync(Guid id)
-    {
-        return await _context.CartItems.FindAsync(id);
-    }
-
-    public async Task AddAsync(CartItem item)
-    {
-        await _context.CartItems.AddAsync(item);
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task UpdateQuantityAsync(Guid id, int quantity)
-    {
-        var item = await _context.CartItems.FindAsync(id);
-        if (item is not null)
+        public CartRepository(ApplicationDbContext context)
         {
-            item.Quantity = quantity;
+            _context = context;
+        }
+
+        public async Task<IEnumerable<CartItem>> GetAllForUserAsync(Guid userId)
+        {
+            return await _context.CartItems
+                .AsNoTracking()
+                .Where(c => c.UserId == userId)
+                .ToListAsync();
+        }
+
+        public async Task<CartItem?> GetByIdAsync(Guid id, Guid userId)
+        {
+            return await _context.CartItems
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
+        }
+
+        public async Task AddAsync(CartItem item)
+        {
+            await _context.CartItems.AddAsync(item);
             await _context.SaveChangesAsync();
         }
-    }
 
-    public async Task DeleteAsync(Guid id)
-    {
-        var item = await _context.CartItems.FindAsync(id);
-        if (item is not null)
+        public async Task UpdateQuantityAsync(Guid id, int quantity, Guid userId)
         {
-            _context.CartItems.Remove(item);
+            var item = await _context.CartItems.FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
+            if (item != null)
+            {
+                item.Quantity = quantity;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task DeleteAsync(Guid id, Guid userId)
+        {
+            var item = await _context.CartItems.FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
+            if (item != null)
+            {
+                _context.CartItems.Remove(item);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task ClearAsync(Guid userId)
+        {
+            var items = _context.CartItems.Where(c => c.UserId == userId);
+            _context.CartItems.RemoveRange(items);
             await _context.SaveChangesAsync();
         }
-    }
-
-    public async Task ClearAsync()
-    {
-        _context.CartItems.RemoveRange(_context.CartItems);
-        await _context.SaveChangesAsync();
     }
 }

@@ -1,13 +1,15 @@
 ﻿using OnlineStore.Domain.Entities;
 
-namespace OnlineStore.Application.Interfaces;
-
-public interface ICartRepository
+namespace OnlineStore.Application.Interfaces
 {
-    Task<IEnumerable<CartItem>> GetAllAsync();
-    Task<CartItem?> GetByIdAsync(Guid id);
-    Task AddAsync(CartItem item);
-    Task UpdateQuantityAsync(Guid id, int quantity);
-    Task DeleteAsync(Guid id);
-    Task ClearAsync(); // Очистка всей корзины (если будет нужно)
+
+    public interface ICartRepository
+    {
+        Task<IEnumerable<CartItem>> GetAllForUserAsync(Guid userId);
+        Task<CartItem?> GetByIdAsync(Guid id, Guid userId);
+        Task AddAsync(CartItem item);
+        Task UpdateQuantityAsync(Guid id, int quantity, Guid userId);
+        Task DeleteAsync(Guid id, Guid userId);
+        Task ClearAsync(Guid userId);
+    }
 }
