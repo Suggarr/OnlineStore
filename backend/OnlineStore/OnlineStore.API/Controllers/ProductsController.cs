@@ -1,117 +1,68 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using OnlineStore.Application.Interfaces;
 using OnlineStore.Application.DTO;
-using OnlineStore.Domain.Entities;
+using OnlineStore.Application.Interfaces;
 
-namespace OnlineStore.WebAPI.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-public class ProductsController : ControllerBase
+namespace OnlineStore.WebAPI.Controllers
 {
-    private readonly IProductRepository _productRepository;
-
-    public ProductsController(IProductRepository productRepository)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ProductsController : ControllerBase
     {
-        _productRepository = productRepository;
-    }
+        private readonly IProductService _productService;
 
-    // GET: api/Products
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> GetAll()
-    {
-        var products = await _productRepository.GetAllAsync();
-
-        var productDtos = products.Select(p => new ProductDto
+        public ProductsController(IProductService productService)
         {
-            Id = p.Id,
-            Name = p.Name,
-            Description = p.Description,
-            Price = p.Price,
-            ImageUrl = p.ImageUrl
-        });
+            _productService = productService;
+        }
 
-        return Ok(productDtos);
-    }
-
-    // GET: api/Products/{id}
-    [HttpGet("{id:guid}")]
-    public async Task<ActionResult<ProductDto>> GetById(Guid id)
-    {
-        var product = await _productRepository.GetByIdAsync(id);
-
-        if (product == null)
-            return NotFound();
-
-        var dto = new ProductDto
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetAll()
         {
-            Id = product.Id,
-            Name = product.Name,
-            Description = product.Description,
-            Price = product.Price,
-            ImageUrl = product.ImageUrl
-        };
+            var products = await _productService.GetAllAsync();
+            return Ok(products);
+        }
 
-        return Ok(dto);
-    }
-
-    // POST: api/Products
-    [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateProductDto dto)
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        // Преобразование DTO → Entity
-        var product = new Product
+        [HttpGet("{id:guid}")]
+        public async Task<ActionResult<ProductDto>> GetById(Guid id)
         {
-            Id = Guid.NewGuid(),
-            Name = dto.Name,
-            Description = dto.Description,
-            Price = dto.Price,
-            ImageUrl = dto.ImageUrl
-        };
+            var product = await _productService.GetByIdAsync(id);
+            if (product == null)
+                return NotFound();
 
-        await _productRepository.AddAsync(product);
-        return Ok(product);
-        //return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
-        
-    }
+            return Ok(product);
+        }
 
-    // PUT: api/Products/{id}
-    [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductDto dto)
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+        [HttpPost]
+        public async Task<ActionResult<ProductDto>> Create([FromBody] CreateProductDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-        var existing = await _productRepository.GetByIdAsync(id);
+            var createdProduct = await _productService.CreateAsync(dto);
+            return Ok(createdProduct);
+        }
 
-        if (existing == null)
-            return NotFound();
+        [HttpPut("{id:guid}")]
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-        // Обновляем только изменяемые поля, ID остается прежним
-        existing.Name = dto.Name;
-        existing.Description = dto.Description;
-        existing.Price = dto.Price;
-        existing.ImageUrl = dto.ImageUrl;
+            var updated = await _productService.UpdateAsync(id, dto);
+            if (!updated)
+                return NotFound();
 
-        await _productRepository.UpdateAsync(existing);
+            return Ok(id);
+        }
 
-        return Ok(id);
-    }
+        [HttpDelete("{id:guid}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var deleted = await _productService.DeleteAsync(id);
+            if (!deleted)
+                return NotFound();
 
-
-    // DELETE: api/Products/{id}
-    [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id)
-    {
-        var product = await _productRepository.GetByIdAsync(id);
-
-        if (product == null)
-            return NotFound();
-
-        await _productRepository.DeleteAsync(id);
-        return Ok(id);
+            return Ok(id);
+        }
     }
 }
