@@ -7,6 +7,7 @@ using OnlineStore.Infrastructure.Services;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using OnlineStore.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -77,6 +78,8 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
