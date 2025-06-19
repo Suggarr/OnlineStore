@@ -6,7 +6,7 @@ namespace OnlineStore.Application.Interfaces
     public interface IUserService
     {
         Task<UserDto?> RegisterAsync(RegisterUserDto dto);
-        Task<AuthResponseDto?> LoginAsync(LoginUserDto dto);
+        Task<string?> LoginAsync(LoginUserDto dto);  // возвращаем только JWT, куку поставим в контроллере
         Task<UserDto?> GetByIdAsync(Guid id);
         Task<IEnumerable<UserDto>> GetAllAsync();
         Task<bool> UpdateAsync(Guid id, UpdateUserDto dto);

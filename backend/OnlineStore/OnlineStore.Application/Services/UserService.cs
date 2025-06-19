@@ -45,7 +45,7 @@ namespace OnlineStore.Application.Services
             };
         }
 
-        public async Task<AuthResponseDto?> LoginAsync(LoginUserDto dto)
+        public async Task<string?> LoginAsync(LoginUserDto dto)
         {
             var user = await _userRepository.GetByEmailAsync(dto.Email);
             if (user == null) return null;
@@ -54,18 +54,7 @@ namespace OnlineStore.Application.Services
             if (!isPasswordValid) return null;
 
             var token = _jwtTokenService.GenerateToken(user);
-
-            return new AuthResponseDto
-            {
-                Token = token,
-                User = new UserDto
-                {
-                    Id = user.Id,
-                    Username = user.UserName,
-                    Email = user.Email,
-                    Role = user.Role.ToString()
-                }
-            };
+            return token;
         }
 
 

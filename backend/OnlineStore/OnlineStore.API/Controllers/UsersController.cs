@@ -12,10 +12,12 @@ namespace OnlineStore.API.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly ILogger<UsersController> _logger;
 
-        public UsersController(IUserService userService)
+        public UsersController(IUserService userService, ILogger<UsersController> logger)
         {
             _userService = userService;
+            _logger = logger;
         }
 
         [HttpPost("register")]
@@ -36,14 +38,39 @@ namespace OnlineStore.API.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginUserDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            _logger.LogInformation("Попытка входа для email: {Email}", dto.Email);
 
-            var user = await _userService.LoginAsync(dto);
-            if (user == null)
-                return Unauthorized("Неверный email или пароль.");
+            var token = await _userService.LoginAsync(dto);
+            if (token == null)
+            {
+                _logger.LogWarning("Неудачная попытка входа для {Email}", dto.Email);
+                return Unauthorized("Неверный логин или пароль.");
+            }
 
-            return Ok(user);
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None, // Для кросс-доменных запросов можно изменить
+                Expires = DateTimeOffset.UtcNow.AddMonths(6)
+            };
+
+            Response.Cookies.Append("AppCookie", token, cookieOptions);
+
+            _logger.LogInformation("Пользователь {Email} успешно вошел", dto.Email);
+            return NoContent();
+        }
+
+        [Authorize]
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            if (Request.Cookies.ContainsKey("AppCookie"))
+            {
+                Response.Cookies.Delete("AppCookie");
+                _logger.LogInformation("Кука удалена. Пользователь разлогинен.");
+            }
+            return NoContent();
         }
 
         [Authorize]

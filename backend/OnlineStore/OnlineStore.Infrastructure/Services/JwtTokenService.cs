@@ -24,7 +24,7 @@ namespace OnlineStore.Infrastructure.Services
             var secretKey = _configuration["Jwt:SecretKey"]; // из user-secrets
             var issuer = jwtSettings["Issuer"];
             var audience = jwtSettings["Audience"];
-            var expiryMinutes = int.Parse(jwtSettings["ExpiryMinutes"] ?? "60");
+            var expiryMinutes = int.Parse(jwtSettings["ExpiryMonths"] ?? "6");
 
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey!));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -36,12 +36,11 @@ namespace OnlineStore.Infrastructure.Services
                 new Claim(ClaimTypes.Role, user.Role.ToString())
             };
 
-
             var token = new JwtSecurityToken(
                 issuer: issuer,
                 audience: audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(expiryMinutes),
+                expires: DateTime.UtcNow.AddMonths(expiryMinutes),
                 signingCredentials: credentials
             );
 
