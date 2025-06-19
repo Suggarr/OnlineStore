@@ -57,7 +57,6 @@ namespace OnlineStore.Application.Services
             return token;
         }
 
-
         public async Task<UserDto?> GetByIdAsync(Guid id)
         {
             var user = await _userRepository.GetByIdAsync(id);

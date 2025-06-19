@@ -97,7 +97,7 @@ builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
 var app = builder.Build();
-
+//app.UseStaticFiles();
 // Конвейер обработки HTTP-запросов
 if (app.Environment.IsDevelopment())
 {
@@ -109,6 +109,15 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication(); // обязательно до UseAuthorization
 app.UseAuthorization();
+app.UseCors(policy =>
+{
+    policy
+        .WithOrigins("http://127.0.0.1:5500")
+        .WithOrigins("http://192.168.100.25:5500")
+        .AllowCredentials()
+        .AllowAnyHeader()
+        .AllowAnyMethod();
+});
 
 app.MapControllers();
 

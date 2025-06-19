@@ -4,6 +4,7 @@ using OnlineStore.Application.DTO;
 using OnlineStore.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using OnlineStore.Domain.Enums;
+using System.Security.Claims;
 
 namespace OnlineStore.API.Controllers
 {
@@ -19,6 +20,18 @@ namespace OnlineStore.API.Controllers
             _userService = userService;
             _logger = logger;
         }
+
+        //private Guid GetUserId()
+        //{
+        //    var userIdClaim = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        //    if (!Guid.TryParse(userIdClaim, out var userId))
+        //    {
+        //        _logger.LogWarning("Не удалось получить userId из токена.");
+        //        throw new UnauthorizedAccessException("Недействительный токен.");
+        //    }
+
+        //    return userId;
+        //}
 
         [HttpPost("register")]
         [AllowAnonymous]
@@ -58,7 +71,7 @@ namespace OnlineStore.API.Controllers
             Response.Cookies.Append("AppCookie", token, cookieOptions);
 
             _logger.LogInformation("Пользователь {Email} успешно вошел", dto.Email);
-            return NoContent();
+            return Ok();
         }
 
         [Authorize]
@@ -67,8 +80,15 @@ namespace OnlineStore.API.Controllers
         {
             if (Request.Cookies.ContainsKey("AppCookie"))
             {
-                Response.Cookies.Delete("AppCookie");
-                _logger.LogInformation("Кука удалена. Пользователь разлогинен.");
+                var cookieOptions = new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None
+                };
+
+                Response.Cookies.Delete("AppCookie", cookieOptions);
+                _logger.LogInformation("Пользователь вышел из аккаунта.");
             }
             return NoContent();
         }
@@ -83,6 +103,42 @@ namespace OnlineStore.API.Controllers
 
             return Ok(user);
         }
+
+
+        [Authorize]
+        [HttpGet("infome")]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            var userId = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (Guid.TryParse(userId, out Guid UserId))
+            {
+                _logger.LogInformation("Retrieving current user information for user with ID {UserId}", UserId);
+                var user = await _userService.GetByIdAsync(UserId);
+                if (user == null)
+                {
+                    _logger.LogWarning("User with ID {UserId} not found", UserId);
+                    return NotFound();
+                }
+                return Ok(user);
+            }
+            _logger.LogWarning("Unauthorized access attempt to retrieve user information");
+            return Unauthorized();
+        }
+
+        //[Authorize]
+        //[HttpGet("infome")]
+        //public async Task<IActionResult> GetCurrentUser()
+        //{
+        //    var userId = GetUserId();
+        //    _logger.LogInformation("Получение информации о текущем пользователе {UserId}", userId);
+
+        //    var user = await _userService.GetByIdAsync(userId);
+        //    if (user == null)
+        //        return NotFound();
+
+        //    return Ok(user);
+        //}
+
 
         [Authorize]
         [HttpGet]
@@ -117,7 +173,7 @@ namespace OnlineStore.API.Controllers
             if (!success)
                 return NotFound();
 
-            return NoContent();
+            return Ok();
         }
 
         [Authorize(Roles = "Admin")]
@@ -128,7 +184,7 @@ namespace OnlineStore.API.Controllers
             if (!success)
                 return NotFound();
 
-            return NoContent();
+            return Ok();
         }
 
         [Authorize(Roles = "Admin")]

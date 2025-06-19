@@ -32,10 +32,9 @@ namespace OnlineStore.Infrastructure.Services
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), // вот сюда кладем userId
-                new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Role, user.Role.ToString())
             };
-
+            //new Claim(ClaimTypes.Email, user.Email),
             var token = new JwtSecurityToken(
                 issuer: issuer,
                 audience: audience,
