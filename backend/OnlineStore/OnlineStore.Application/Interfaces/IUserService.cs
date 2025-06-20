@@ -10,7 +10,7 @@ namespace OnlineStore.Application.Interfaces
         Task<UserDto?> GetByIdAsync(Guid id);
         Task<IEnumerable<UserDto>> GetAllAsync();
         Task<bool> UpdateAsync(Guid id, UpdateUserDto dto);
-        Task<bool> UpdatePasswordAsync(Guid id, string newPassword);
+        Task UpdatePasswordAsync(Guid id, UpdatePasswordDto updatePasswordDto);
         Task<bool> DeleteAsync(Guid id);
         Task<bool> ChangeUserRoleAsync(Guid id, UserRole newRole);
     }

@@ -53,16 +53,30 @@ namespace OnlineStore.Application.Services
             if (product is null)
                 return false;
 
-            var cartItem = new CartItem
+            // Проверяем, есть ли уже такой товар в корзине пользователя
+            var existingItem = await _cartRepository.GetByProductIdAsync(dto.ProductId, userId);
+            if (existingItem != null)
             {
-                ProductId = product.Id,
-                Quantity = dto.Quantity,
-                UserId = userId
-            };
+                // Если есть, просто увеличиваем количество
+                existingItem.Quantity += dto.Quantity;
+                await _cartRepository.UpdateQuantityAsync(existingItem.Id, existingItem.Quantity, userId);
+            }
+            else
+            {
+                // Если нет — создаем новый
+                var cartItem = new CartItem
+                {
+                    ProductId = product.Id,
+                    Quantity = dto.Quantity,
+                    UserId = userId
+                };
 
-            await _cartRepository.AddAsync(cartItem);
+                await _cartRepository.AddAsync(cartItem);
+            }
+
             return true;
         }
+
 
         public async Task<bool> UpdateQuantityAsync(Guid id, int quantity, Guid userId)
         {

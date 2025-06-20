@@ -94,14 +94,15 @@ namespace OnlineStore.Application.Services
             return true;
         }
 
-        public async Task<bool> UpdatePasswordAsync(Guid id, string newPassword)
+        public async Task UpdatePasswordAsync(Guid id, UpdatePasswordDto updateUserPasswordDto)
         {
             var user = await _userRepository.GetByIdAsync(id);
-            if (user == null) return false;
-
-            user.PasswordHash = await _passwordHasher.HashPassword(newPassword);
+            if (user == null || !await _passwordHasher.VerifyPassword(user.PasswordHash, updateUserPasswordDto.OldPassword))
+            {
+                throw new InvalidOperationException();
+            }
+            user.PasswordHash = await _passwordHasher.HashPassword(updateUserPasswordDto.NewPassword);
             await _userRepository.UpdateAsync(user);
-            return true;
         }
 
         public async Task<bool> DeleteAsync(Guid id)

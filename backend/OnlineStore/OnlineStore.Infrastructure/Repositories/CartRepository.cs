@@ -31,6 +31,14 @@ namespace OnlineStore.Infrastructure.Repositories
                 .FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
         }
 
+        public async Task<CartItem?> GetByProductIdAsync(Guid productId, Guid userId)
+        {
+            return await _context.CartItems
+                .Include(c => c.Product)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.UserId == userId && c.ProductId == productId);
+        }
+
         public async Task AddAsync(CartItem item)
         {
             await _context.CartItems.AddAsync(item);

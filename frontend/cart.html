@@ -1,9 +1,8 @@
-<!-- Начало cart.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Корзина</title>
   <style>
     * {
@@ -108,46 +107,132 @@
   <main>
     <section class="cart">
       <h2>Ваша корзина</h2>
-
-      <div class="cart-item">
-        <img src="https://via.placeholder.com/100x100?text=Товар+1" alt="Товар 1">
-        <div class="cart-item-details">
-          <h3>Товар 1</h3>
-          <p>Количество: 1</p>
-          <p>Цена: 999 ₽</p>
-        </div>
-        <button>Удалить</button>
-      </div>
-
-      <div class="cart-item">
-        <img src="https://via.placeholder.com/100x100?text=Товар+2" alt="Товар 2">
-        <div class="cart-item-details">
-          <h3>Товар 2</h3>
-          <p>Количество: 2</p>
-          <p>Цена: 799 ₽</p>
-        </div>
-        <button>Удалить</button>
-      </div>
-
-      <div class="cart-item">
-        <img src="https://via.placeholder.com/100x100?text=Товар+3" alt="Товар 3">
-        <div class="cart-item-details">
-          <h3>Товар 3</h3>
-          <p>Количество: 1</p>
-          <p>Цена: 499 ₽</p>
-        </div>
-        <button>Удалить</button>
-      </div>
-
-      <div class="total">
-        Итого: 999 + 2×799 + 499 = <strong>3096 ₽</strong>
-      </div>
-      
+      <div id="cartItems"></div>
+      <div class="total" id="totalPrice">Итого: 0 ₽</div>
+      <button onclick="clearCart()">Очистить корзину</button>
+      <button onclick="createOrder()">Оформить заказ</button>
     </section>
   </main>
 
   <footer>
     &copy; 2025 MyShop — Все права защищены
   </footer>
+
+  <script>
+    const apiBaseUrl = "https://localhost:7240/api"; // замени на свой адрес API
+
+    async function loadCart() {
+      const response = await fetch(`${apiBaseUrl}/CartItems`, {
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        alert("Ошибка загрузки корзины");
+        return;
+      }
+
+      const items = await response.json();
+      const cartItemsContainer = document.getElementById("cartItems");
+      cartItemsContainer.innerHTML = "";
+
+      let total = 0;
+
+      items.forEach(item => {
+        total += item.price * item.quantity;
+
+        const itemDiv = document.createElement("div");
+        itemDiv.className = "cart-item";
+        itemDiv.innerHTML = `
+          <img src="${item.imageUrl}" alt="${item.productName}">
+          <div class="cart-item-details">
+            <h3>${item.productName}</h3>
+            <p>Цена: ${item.price} ₽</p>
+            <p>
+              Количество: 
+              <input type="number" value="${item.quantity}" min="1" style="width: 60px"
+                onchange="updateQuantity('${item.id}', this.value)">
+            </p>
+          </div>
+          <button onclick="deleteItem('${item.id}')">Удалить</button>
+        `;
+
+        cartItemsContainer.appendChild(itemDiv);
+      });
+
+      document.getElementById("totalPrice").innerHTML = `Итого: ${total} ₽`;
+    }
+
+    async function deleteItem(id) {
+      if (!confirm("Удалить товар из корзины?")) return;
+
+      const response = await fetch(`${apiBaseUrl}/CartItems/${id}`, {
+        method: "DELETE",
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        loadCart();
+      } else {
+        alert("Ошибка удаления");
+      }
+    }
+
+    async function updateQuantity(id, quantity) {
+      if (quantity < 1) {
+        alert("Количество не может быть меньше 1");
+        loadCart();
+        return;
+      }
+
+      const response = await fetch(`${apiBaseUrl}/CartItems/${id}/quantity`, {
+        method: "PUT",
+        credentials: 'include',
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ quantity: parseInt(quantity) })
+      });
+
+      if (!response.ok) {
+        alert("Ошибка обновления количества");
+        loadCart();
+      } else {
+        loadCart();
+      }
+    }
+
+    async function clearCart() {
+      if (!confirm("Очистить корзину?")) return;
+
+      const response = await fetch(`${apiBaseUrl}/CartItems/clear`, {
+        method: "DELETE",
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        loadCart();
+      } else {
+        alert("Ошибка очистки корзины");
+      }
+    }
+
+    async function createOrder() {
+      if (!confirm("Создать заказ из корзины?")) return;
+
+      const response = await fetch(`${apiBaseUrl}/Orders`, {
+        method: "POST",
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        alert("Заказ создан!");
+        loadCart();
+      } else {
+        alert("Ошибка создания заказа");
+      }
+    }
+
+    window.onload = loadCart;
+  </script>
 </body>
 </html>
