@@ -10,7 +10,7 @@ namespace OnlineStore.Application.DTO
     public class UpdateUserDto
     {
         [Required]
-        [StringLength(50, MinimumLength = 5)]
+        [StringLength(25, MinimumLength = 5)]
         public string Username { get; set; } = string.Empty;
 
         [Required]

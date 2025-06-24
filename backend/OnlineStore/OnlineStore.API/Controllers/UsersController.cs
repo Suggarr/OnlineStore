@@ -91,7 +91,7 @@ namespace OnlineStore.API.Controllers
             return NoContent();
         }
 
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
@@ -110,16 +110,16 @@ namespace OnlineStore.API.Controllers
             var userId = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (Guid.TryParse(userId, out Guid UserId))
             {
-                _logger.LogInformation("Retrieving current user information for user with ID {UserId}", UserId);
+                _logger.LogInformation($"Получение информации о текущем пользователе с идентификатором {UserId}");
                 var user = await _userService.GetByIdAsync(UserId);
                 if (user == null)
                 {
-                    _logger.LogWarning("User with ID {UserId} not found", UserId);
+                    _logger.LogWarning($"Пользователь с Id {UserId} не найден");
                     return NotFound();
                 }
                 return Ok(user);
             }
-            _logger.LogWarning("Unauthorized access attempt to retrieve user information");
+            _logger.LogWarning("Попытка несанкционированного доступа при обновлении профиля");
             return Unauthorized();
         }
 
@@ -138,7 +138,7 @@ namespace OnlineStore.API.Controllers
         //}
 
 
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -147,17 +147,29 @@ namespace OnlineStore.API.Controllers
         }
 
         [Authorize]
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDto dto)
+        [HttpPut("infome/name")]
+        public async Task<IActionResult> Update([FromBody] UpdateUserDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            var userId = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (Guid.TryParse(userId, out Guid UserId))
+            {
+                if (!ModelState.IsValid)
+                {
+                    _logger.LogWarning("Ошибка валидации данных при обновлении профиля");
+                    return BadRequest(ModelState);
+                }
+                var success = await _userService.UpdateAsync(UserId, dto);
+                _logger.LogInformation($"Пользователь с Id {UserId} пытается обновить свои данные (Email/Username)");
+                if (!success)
+                {
+                    _logger.LogWarning($"Пользователь с Id {UserId} не найден при обновлении профиля");
+                    return NotFound();
+                }
 
-            var success = await _userService.UpdateAsync(id, dto);
-            if (!success)
-                return NotFound();
-
-            return NoContent();
+                return Ok();
+            }
+            _logger.LogWarning("Попытка несанкционированного доступа при обновлении профиля");
+            return Unauthorized();
         }
 
         [Authorize]
@@ -167,7 +179,7 @@ namespace OnlineStore.API.Controllers
             var userId = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (Guid.TryParse(userId, out Guid UserId))
             {
-                _logger.LogInformation("Пользователь с Id {UserId} пытается обновить свой пароль", UserId);
+                _logger.LogInformation($"Пользователь с Id {UserId} пытается обновить свой пароль");
                 try
                 {
                     await _userService.UpdatePasswordAsync(UserId, updatePasswordDto);
@@ -180,13 +192,13 @@ namespace OnlineStore.API.Controllers
                             SameSite = SameSiteMode.None
                         };
                         Response.Cookies.Delete("AppCookie", cookieOptions);
-                        _logger.LogInformation("Пользователь с Id {} вышел из аккаунта, т.к. был изменен им пароль.", UserId);
+                        _logger.LogInformation($"Пользователь с Id {UserId} вышел из аккаунта, т.к. был изменен им пароль.");
                     }
                     return Ok();
                 }
                 catch (InvalidOperationException)
                 {
-                    _logger.LogWarning("Неудачная попытка смена пароля для пользователя с Id {UserId}", UserId);
+                    _logger.LogWarning($"Неудачная попытка смена пароля для пользователя с Id {UserId}");
                     return Conflict();
                 }
             }

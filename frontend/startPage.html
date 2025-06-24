@@ -133,13 +133,16 @@
       const name = form.querySelector('input[type="text"]').value;
       const email = form.querySelector('input[type="email"]').value;
       const password = form.querySelector('input[type="password"]').value;
-
+      if (password.length < 6) {
+        alert('Пароль должен содержать не менее 6 символов.');
+        return;
+      }
       const data = {
         username: name,
         email: email,
         password: password
       };
-
+      
       try {
         const response = await fetch('https://localhost:7240/api/users/register', {
           method: 'POST',
