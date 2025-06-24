@@ -128,7 +128,7 @@
 
       try {
         const response = await fetch('https://localhost:7240/api/orders', {
-          credentials: 'include' // ⚠️ cookie JWT
+          credentials: 'include' //cookie JWT
         });
 
         if (!response.ok) {
@@ -159,9 +159,9 @@
                 <img src="${item.imageUrl}" alt="${item.productName}">
                 <div class="item-info">
                   <span>Товар: ${item.productName}</span>
-                  <span>Цена: ${item.price} ₽</span>
+                  <span>Цена: ${item.price} $</span>
                   <span>Количество: ${item.quantity}</span>
-                  <span>Сумма: ${itemTotal} ₽</span>
+                  <span>Сумма: ${itemTotal} $</span>
                 </div>
               </div>
             `;
@@ -174,7 +174,7 @@
             </div>
             <div class="order-items">
               ${itemsHtml}
-              <div class="order-item"><strong>Итого: ${total} ₽</strong></div>
+              <div class="order-item"><strong>Итого: ${total} $</strong></div>
             </div>
           `;
 

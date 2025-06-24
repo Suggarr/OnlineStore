@@ -167,10 +167,18 @@
 
     .admin-tab table {
       width: 100%;
+      margin-top: 10px;
       border-collapse: collapse;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       border-radius: 8px;
       overflow: hidden;
+    }
+
+    .admin-tab td:nth-child(4) {
+      max-width: 200px; /* ограничение ширины столбца описания */
+      white-space: normal; /* разрешить перенос строк */
+      word-wrap: break-word; /* переносить длинные слова */
+      overflow-wrap: break-word; /* для современных браузеров */
     }
 
     .admin-tab thead {
@@ -181,12 +189,42 @@
     .admin-tab th, .admin-tab td {
       padding: 12px 15px;
       border-bottom: 1px solid #ddd;
+    } 
+
+    /* Общий стиль кнопок действий внутри таблицы */
+    .admin-tab button{
+      padding: 8px 16px;
+      font-size: 14px;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      margin: 2px;
+      white-space: nowrap;
+      min-width: 130px; /* фиксируем минимальную ширину */
     }
 
-    .admin-tab tr:hover {
-      background-color: #f1f1f1;
+    /* Конкретные цвета действий */
+    .add-button {
+      background-color: #4CAF50;
+    }
+    .add-button:hover {
+      background-color: #45a049;
     }
 
+    .edit-button {
+      background-color: #007BFF;
+    }
+    .edit-button:hover {
+      background-color: #0069d9;
+    }
+
+    .delete-button {
+      background-color: #e60000;
+    }
+    .delete-button:hover {
+      background-color: #990000;
+    }
   </style>
 </head>
 <body>
@@ -231,7 +269,7 @@
       </div>
       <div id="productsTab" class="admin-tab">
         <h3>Управление товарами</h3>
-        <button onclick="openCreateProductModal()">Добавить товар</button>
+        <button class="add-button" onclick="openCreateProductModal()">Добавить товар</button>
         <table>
           <thead>
             <tr><th>ID</th><th>Название</th><th>Цена</th><th>Описание</th><th>Изображение</th><th>Действия</th></tr>
@@ -459,12 +497,12 @@
           tr.innerHTML = `
             <td>${product.id}</td>
             <td>${product.name}</td>
-            <td>${product.price} ₽</td>
+            <td>${product.price} $</td>
             <td>${product.description}</td>
-            <td><img src="${product.imageUrl}" alt="Фото" style="width: 50px; height: 50px; object-fit: cover;"></td>
+            <td><img src="${product.imageUrl}" alt="Фото" style="width: 130px; height: 130px; object-fit: cover;"></td>
             <td>
-              <button onclick="openEditProductModal('${product.id}', '${product.name}', ${product.price}, '${product.description}', '${product.imageUrl}')">Редактировать</button>
-              <button onclick="deleteProduct('${product.id}')">Удалить</button>
+              <button class="action-button edit-button" onclick="openEditProductModal('${product.id}', '${product.name}', ${product.price}, '${product.description}', '${product.imageUrl}')">Редактировать</button>
+              <button class="action-button delete-button" onclick="deleteProduct('${product.id}')">Удалить</button>
             </td>`;
           tbody.appendChild(tr);
         });

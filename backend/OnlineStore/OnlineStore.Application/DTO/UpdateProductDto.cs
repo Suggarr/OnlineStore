@@ -5,11 +5,11 @@ namespace OnlineStore.Application.DTO
     public class UpdateProductDto
     {
         [Required]
-        [MaxLength(100)]
+        [MaxLength(50)]//было 100
         public string Name { get; set; } = default!;
 
         [Required]
-        [MaxLength(500)]
+        [MaxLength(200)]//было 500
         public string Description { get; set; } = default!;
 
         [Range(0.01, 100000)]

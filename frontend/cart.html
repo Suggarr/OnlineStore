@@ -108,7 +108,7 @@
     <section class="cart">
       <h2>Ваша корзина</h2>
       <div id="cartItems"></div>
-      <div class="total" id="totalPrice">Итого: 0 ₽</div>
+      <div class="total" id="totalPrice">Итого: 0 $</div>
       <button onclick="clearCart()">Очистить корзину</button>
       <button onclick="createOrder()">Оформить заказ</button>
     </section>
@@ -146,7 +146,7 @@
           <img src="${item.imageUrl}" alt="${item.productName}">
           <div class="cart-item-details">
             <h3>${item.productName}</h3>
-            <p>Цена: ${item.price} ₽</p>
+            <p>Цена: ${item.price} $</p>
             <p>
               Количество: 
               <input type="number" value="${item.quantity}" min="1" style="width: 60px"
@@ -159,7 +159,7 @@
         cartItemsContainer.appendChild(itemDiv);
       });
 
-      document.getElementById("totalPrice").innerHTML = `Итого: ${total} ₽`;
+      document.getElementById("totalPrice").innerHTML = `Итого: ${total} $`;
     }
 
     async function deleteItem(id) {

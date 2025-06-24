@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Каталог</title>
   <style>
     * {
@@ -44,34 +44,53 @@
     .catalog h2 {
       margin-bottom: 20px;
     }
+
     .product-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      display: flex;
+      flex-direction: column;
       gap: 20px;
     }
+
     .product {
+      display: flex;
       background: white;
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      text-align: center;
+      align-items: center;
+      gap: 20px;
     }
     .product img {
-      max-width: 100%;
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
       border-radius: 8px;
     }
-    .product h3 {
-      margin-top: 10px;
+    .product-info {
+      flex: 1;
+    }
+    .product-info h3 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    .product-info p.description {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 10px;
+    }
+    .product-info p.price {
       font-size: 18px;
+      font-weight: bold;
+      color: #333;
     }
     .product button {
-      margin-top: 10px;
       padding: 10px 20px;
       border: none;
       background-color: #4CAF50;
       color: white;
       border-radius: 6px;
       cursor: pointer;
+      font-size: 16px;
     }
     .product button:hover {
       background-color: #45a049;
@@ -101,7 +120,7 @@
     <section class="catalog">
       <h2>Каталог товаров</h2>
       <div class="product-list" id="product-list">
-        <!-- Тут динамически будут появляться товары -->
+        <!-- Динамически заполняется -->
       </div>
     </section>
   </main>
@@ -111,17 +130,16 @@
   </footer>
 
   <script>
-    // Загружаем товары с сервера
     async function loadProducts() {
       const response = await fetch('https://localhost:7240/api/products', {
-        credentials: 'include' // очень важно для кук
+        credentials: 'include'
       });
 
       if (!response.ok) {
         alert('Ошибка загрузки товаров');
         return;
       }
-          
+
       const products = await response.json();
       const container = document.getElementById('product-list');
       container.innerHTML = '';
@@ -131,8 +149,11 @@
         div.className = 'product';
         div.innerHTML = `
           <img src="${product.imageUrl}" alt="${product.name}">
-          <h3>${product.name}</h3>
-          <p>${product.price} ₽</p>
+          <div class="product-info">
+            <h3>${product.name}</h3>
+            <p class="description">${product.description}</p>
+            <p class="price">${product.price} $</p>
+          </div>
           <button onclick="addToCart('${product.id}')">Купить</button>
         `;
         container.appendChild(div);
@@ -140,17 +161,12 @@
     }
 
     async function addToCart(productId) {
-      const dto = {
-        productId: productId,
-        quantity: 1
-      };
+      const dto = { productId: productId, quantity: 1 };
 
       const response = await fetch('https://localhost:7240/api/cartitems', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include', // обязательно передаем куки (авторизация)
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(dto)
       });
 
@@ -163,7 +179,6 @@
       }
     }
 
-    // Загружаем товары при открытии страницы
     window.onload = loadProducts;
   </script>
 </body>
