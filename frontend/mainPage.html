@@ -67,6 +67,42 @@
       font-size: 14px;
       color: #666;
     }
+    @media (max-width: 600px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 16px 20px;
+      }
+
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      nav a {
+        font-size: 14px;
+        margin: 0;
+      }
+
+      .hero-overlay {
+        font-size: 22px;
+        padding: 15px 20px;
+        text-align: center;
+      }
+
+      .hero {
+        min-height: 300px;
+        background-position: center;
+      }
+
+      footer {
+        font-size: 13px;
+        padding: 15px;
+      }
+    }
+
   </style>
 </head>
 <body>

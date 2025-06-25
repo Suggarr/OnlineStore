@@ -1,0 +1,148 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+html, body {
+    height: 100%;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    flex-direction: column;
+}
+header {
+    background-color: #4CAF50;
+    color: white;
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+header h1 {
+    font-size: 24px;
+}
+nav a {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+    font-size: 16px;
+}
+main {
+    flex: 1;
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+.orders-container {
+    background-color: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 800px;
+}
+.orders-container h2 {
+    margin-bottom: 20px;
+    color: #333;
+}
+.order {
+    border-bottom: 1px solid #ddd;
+    padding: 15px 0;
+}
+.order:last-child {
+    border-bottom: none;
+}
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+.order-items {
+    margin-left: 20px;
+}
+.order-item {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+}
+.order-item img {
+    width: 130px;/*Было по 60*/
+    height: 130px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-right: 10px;
+}
+.item-info {
+    display: flex;
+    flex-direction: column;
+}
+.item-info span {
+    color: #555;
+}
+footer {
+    text-align: center;
+    padding: 20px;
+    background-color: #eee;
+    font-size: 14px;
+    color: #666;
+}
+@media (max-width: 600px) {
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px 20px;
+  }
+
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  nav a {
+    font-size: 14px;
+    margin: 0;
+  }
+
+  main {
+    padding: 20px;
+  }
+
+  .orders-container {
+    padding: 20px;
+    border-radius: 10px;
+  }
+
+  .order-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .order-items {
+    margin-left: 0;
+  }
+
+  .order-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .order-item img {
+    width: 100%;
+    height: auto;
+    margin-bottom: 10px;
+  }
+
+  .item-info span {
+    font-size: 14px;
+  }
+
+  footer {
+    padding: 15px;
+    font-size: 13px;
+  }
+}
