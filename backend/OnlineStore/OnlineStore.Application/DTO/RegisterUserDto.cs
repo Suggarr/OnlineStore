@@ -10,7 +10,7 @@ namespace OnlineStore.Application.DTO
     public class RegisterUserDto
     {
         [Required]
-        [StringLength(50, MinimumLength = 5, ErrorMessage = "Имя пользователя должно содержать от 5 до 50 символов.")]
+        [StringLength(30, MinimumLength = 6, ErrorMessage = "Имя пользователя должно содержать от 6 до 30 символов.")]
         public string Username { get; set; } = string.Empty;
 
         [Required]
@@ -18,7 +18,7 @@ namespace OnlineStore.Application.DTO
         public string Email { get; set; } = string.Empty;
 
         [Required]
-        [MinLength(6, ErrorMessage = "Пароль должен содержать минимум 6 символов.")]
+        [MinLength(8, ErrorMessage = "Пароль должен содержать минимум 8 символов.")]//Пароль должен быть не короче 8 символов
         public string Password { get; set; } = string.Empty;
 
     }

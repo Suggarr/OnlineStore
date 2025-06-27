@@ -10,11 +10,11 @@ namespace OnlineStore.Application.DTO
     public class UpdateUserDto
     {
         [Required]
-        [StringLength(25, MinimumLength = 5)]
+        [StringLength(30, MinimumLength = 6, ErrorMessage = "Имя пользователя должно содержать от 6 до 30 символов.")]
         public string Username { get; set; } = string.Empty;
 
         [Required]
-        [EmailAddress]
+        [EmailAddress(ErrorMessage = "Введите корректный email.")]
         public string Email { get; set; } = string.Empty;
     }
 

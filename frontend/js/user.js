@@ -61,7 +61,7 @@ async function updateProfile() {
     loadUserProfile();
     } 
     else if (response.status === 400) {
-    alert('Имя пользователя должно быть не менее 5 символов и не более 25, а email должен быть корректным');
+    alert('Имя пользователя должно быть не менее 6 символов и не более 30, а email должен быть корректным');
     }
     else {
     alert('Ошибка при обновлении');
@@ -92,10 +92,10 @@ async function changePassword() {
     newPassword: newPassword 
     };
     
-    if (newPassword.length < 6) {
-    alert('Пароль должен быть не менее 6 символов');
-    return;
-    }
+    // if (newPassword.length < 8) {
+    // alert('Пароль должен быть не менее 8 символов');
+    // return;
+    // }
     const response = await fetch(`https://localhost:7240/api/users/infome/password`, {
     method: 'PATCH',
     credentials: 'include',
@@ -108,6 +108,9 @@ async function changePassword() {
     window.location.href = 'startPage.html';
     } else if (response.status === 409) {
     alert('Старый пароль введен неверно.');
+    } 
+    else if (response.status === 400) {
+    alert('Пароль должен быть не короче 8 символов');
     } else {
     alert('Ошибка при смене пароля');
     }

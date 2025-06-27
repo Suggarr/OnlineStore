@@ -3,7 +3,6 @@ using Microsoft.IdentityModel.Tokens;
 using OnlineStore.Application.Interfaces;
 using OnlineStore.Infrastructure.Data;
 using OnlineStore.Infrastructure.Repositories;
-using OnlineStore.Infrastructure.Services;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -50,7 +49,6 @@ builder.Services.AddAuthorization();
 // Добавление контроллеров и Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-//builder.Services.AddSwaggerGen();
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme

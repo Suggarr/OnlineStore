@@ -8,10 +8,10 @@ async function register(event) {
     const name = form.querySelector('input[type="text"]').value;
     const email = form.querySelector('input[type="email"]').value;
     const password = form.querySelector('input[type="password"]').value;
-    if (password.length < 6) {
-    alert('Пароль должен содержать не менее 6 символов.');
-    return;
-    }
+    // if (password.length < 8) {
+    // alert('Пароль должен содержать не менее 8 символов.');
+    // return;
+    // }
     const data = {
     username: name,
     email: email,
@@ -32,7 +32,11 @@ async function register(event) {
         toggleForm(); // Переключаемся на форму входа
     } else if (response.status === 409) {
         alert('Пользователь с таким email или именем уже существует.');
-    } else {
+    } 
+    else if (response.status === 400) {
+    alert('Имя пользователя должно быть не менее 6 символов и не более 30, а email должен быть корректным.\nПароль должен быть не короче 8 символов');
+    }
+    else {
         alert('Ошибка при регистрации');
     }
     } catch (error) {

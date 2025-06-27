@@ -75,10 +75,10 @@
       <div class="modal-content">
         <button class="close-btn" onclick="closeEditProductModal()">&times;</button>
         <h3>Редактировать товар</h3>
-        <input type="text" id="editProductName" placeholder="Название">
-        <input type="number" id="editProductPrice" placeholder="Цена" step="0.1">
-        <textarea id="editProductDescription" placeholder="Описание"></textarea>
-        <input type="url" id="editProductImageUrl" placeholder="Ссылка на изображение">
+        <input type="text" id="editProductName" placeholder="Название" required>
+        <input type="number" id="editProductPrice" placeholder="Цена" step="0.1" required>
+        <textarea id="editProductDescription" placeholder="Описание" required></textarea>
+        <input type="url" id="editProductImageUrl" placeholder="Ссылка на изображение" required>
         <button onclick="saveProductChanges()">Сохранить изменения</button>
       </div>
     </div>
@@ -87,8 +87,8 @@
       <div class="modal-content">
         <button class="close-btn" onclick="closeEditModal()">&times;</button>
         <h3>Редактировать профиль</h3>
-        <input type="text" id="newUsername" placeholder="Новое имя пользователя">
-        <input type="email" id="newEmail" placeholder="Новый Email">
+        <input type="text" id="newUsername" placeholder="Новое имя пользователя" required>
+        <input type="email" id="newEmail" placeholder="Новый Email" required>
         <button onclick="updateProfile()">Сохранить</button>
       </div>
     </div>
@@ -96,9 +96,9 @@
       <div class="modal-content">
         <button class="close-btn" onclick="closePasswordModal()">&times;</button>
         <h3>Сменить пароль</h3>
-        <input type="password" id="oldPassword" placeholder="Старый пароль">
-        <input type="password" id="newPassword" placeholder="Новый пароль">
-        <input type="password" id="confirmPassword" placeholder="Подтвердите новый пароль">
+        <input type="password" id="oldPassword" placeholder="Старый пароль" required>
+        <input type="password" id="newPassword" placeholder="Новый пароль" required>
+        <input type="password" id="confirmPassword" placeholder="Подтвердите новый пароль" required>
         <button onclick="changePassword()">Сменить</button>
       </div>
     </div>
