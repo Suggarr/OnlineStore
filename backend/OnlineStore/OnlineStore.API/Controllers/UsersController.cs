@@ -21,18 +21,6 @@ namespace OnlineStore.API.Controllers
             _logger = logger;
         }
 
-        //private Guid GetUserId()
-        //{
-        //    var userIdClaim = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        //    if (!Guid.TryParse(userIdClaim, out var userId))
-        //    {
-        //        _logger.LogWarning("Не удалось получить userId из токена.");
-        //        throw new UnauthorizedAccessException("Недействительный токен.");
-        //    }
-
-        //    return userId;
-        //}
-
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegisterUserDto dto)
@@ -123,25 +111,11 @@ namespace OnlineStore.API.Controllers
             return Unauthorized();
         }
 
-        //[Authorize]
-        //[HttpGet("infome")]
-        //public async Task<IActionResult> GetCurrentUser()
-        //{
-        //    var userId = GetUserId();
-        //    _logger.LogInformation("Получение информации о текущем пользователе {UserId}", userId);
-
-        //    var user = await _userService.GetByIdAsync(userId);
-        //    if (user == null)
-        //        return NotFound();
-
-        //    return Ok(user);
-        //}
-
-
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
+            _logger.LogInformation("Администратор запрашивает список всех пользователей");
             var users = await _userService.GetAllAsync();
             return Ok(users);
         }
@@ -210,10 +184,14 @@ namespace OnlineStore.API.Controllers
         [HttpPatch("{id}/role")]
         public async Task<IActionResult> ChangeRole(Guid id, [FromBody] UpdateUserRoleDto dto)
         {
+            _logger.LogInformation($"Администратор пытается изменить роль пользователя с Id {id} на {dto.Role}");
             var success = await _userService.ChangeUserRoleAsync(id, dto.Role);
             if (!success)
+            {
+                _logger.LogWarning($"Не удалось изменить роль — пользователь с Id {id} не найден");
                 return NotFound();
-
+            }
+            _logger.LogInformation($"Роль пользователя с Id {id} успешно изменена на {dto.Role}");
             return Ok();
         }
 
@@ -221,10 +199,14 @@ namespace OnlineStore.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
+            _logger.LogInformation($"Администратор пытается удалить пользователя с Id {id}");
             var success = await _userService.DeleteAsync(id);
             if (!success)
+            {
+                _logger.LogWarning($"Удаление не удалось — пользователь с Id {id} не найден");
                 return NotFound();
-
+            }
+            _logger.LogInformation($"Пользователь с Id {id} успешно удален");
             return NoContent();
         }
     }

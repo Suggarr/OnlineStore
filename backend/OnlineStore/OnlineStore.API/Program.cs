@@ -46,7 +46,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// Добавление контроллеров и Swagger
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -95,8 +95,7 @@ builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
 var app = builder.Build();
-//app.UseStaticFiles();
-// Конвейер обработки HTTP-запросов
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -105,7 +104,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication(); // обязательно до UseAuthorization
+app.UseAuthentication();
 app.UseAuthorization();
 app.UseCors(policy =>
 {

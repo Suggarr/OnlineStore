@@ -19,7 +19,7 @@ async function register(event) {
     };
     
     try {
-    const response = await fetch('https://localhost:7240/api/users/register', {
+    const response = await fetch(`${API_BASE_URL}/api/users/register`, {
         method: 'POST',
         headers: {
         'Content-Type': 'application/json'
@@ -58,7 +58,7 @@ async function login(event) {
     };
 
     try {
-    const response = await fetch('https://localhost:7240/api/users/login', {
+    const response = await fetch(`${API_BASE_URL}/api/users/login`, {
         method: 'POST',
         headers: {
         'Content-Type': 'application/json'
@@ -86,7 +86,7 @@ async function login(event) {
 // Проверяем есть ли авторизация при загрузке страницы
 window.onload = async function() {
     try {
-    const response = await fetch('https://localhost:7240/api/users/infome', {
+    const response = await fetch(`${API_BASE_URL}/api/users/infome`, {
         method: 'GET',
         credentials: 'include'
     });
