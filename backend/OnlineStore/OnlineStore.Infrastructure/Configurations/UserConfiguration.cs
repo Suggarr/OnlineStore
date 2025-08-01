@@ -27,7 +27,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired()
             .HasMaxLength(20);
 
-        builder.HasIndex(u => u.UserName).IsUnique();//Пока для них двух не сделал миграцию
+        builder.HasIndex(u => u.UserName).IsUnique();
         builder.HasIndex(u => u.Email).IsUnique();
     }
 }
