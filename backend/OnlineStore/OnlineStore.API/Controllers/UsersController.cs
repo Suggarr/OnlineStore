@@ -49,8 +49,8 @@ namespace OnlineStore.API.Controllers
             var cookieOptions = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None, // Для кросс-доменных запросов можно изменить
+                Secure = false, //true для https
+                SameSite = SameSiteMode.Lax, // None для https
                 Expires = DateTimeOffset.UtcNow.AddMonths(6)
             };
 
@@ -69,8 +69,8 @@ namespace OnlineStore.API.Controllers
                 var cookieOptions = new CookieOptions
                 {
                     HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.None
+                    Secure = false, //true для https
+                    SameSite = SameSiteMode.Lax // None для https
                 };
 
                 Response.Cookies.Delete("AppCookie", cookieOptions);

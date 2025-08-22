@@ -1,0 +1,67 @@
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:latest
+    env_file:
+      - .env
+    # environment:
+    #   - POSTGRES_DB : "OnlineStoreDb"
+    #   - POSTGRES_USER : "postgres"
+    #   - POSTGRES_PASSWORD : "Sugar"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - mynetwork 
+
+# Надо подключить еще бд
+  backend:
+    container_name: OnlineStore
+    build:
+      context: ./backend/OnlineStore
+      dockerfile: Dockerfile
+    ports:
+      - "5200:5200"
+    env_file: #Jwt__SecretKey ConnectionString
+      - .env 
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    volumes:
+      - api_data:/app/data
+    networks:
+      - mynetwork
+    depends_on:
+      - postgres
+
+  # nginx:
+  #   container_name: nginx
+  #   image: nginx:latest
+  #   ports:
+  #     - "80:80"
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+  #     - ./nginx/build:/usr/share/nginx/html
+  #   depends_on:
+  #     - webapi
+  #   networks:
+  #     - mynetwork
+
+  # ngrok:
+  #   container_name: ngrok
+  #   image: ngrok/ngrok:latest
+  #   command: http nginx:80 --url=moved-ideally-rabbit.ngrok-free.app
+  #   depends_on:
+  #     - nginx
+  #   env_file:
+  #     - .env
+  #   networks:
+  #     - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  api_data:

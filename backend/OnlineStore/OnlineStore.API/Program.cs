@@ -10,7 +10,7 @@ using OnlineStore.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Конфигурация JwtSettings из appsettings и секретов
+// РљРѕРЅС„РёРіСѓСЂР°С†РёСЏ JwtSettings РёР· appsettings Рё СЃРµРєСЂРµС‚РѕРІ
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = builder.Configuration["Jwt:SecretKey"];
 
@@ -58,7 +58,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Введите токен JWT в формате: Bearer {токен}"
+        Description = "Р’РІРµРґРёС‚Рµ С‚РѕРєРµРЅ JWT РІ С„РѕСЂРјР°С‚Рµ: Bearer {С‚РѕРєРµРЅ}"
     });
 
     options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
@@ -78,11 +78,11 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 
-// Настройка базы данных
+// РќР°СЃС‚СЂРѕР№РєР° Р±Р°Р·С‹ РґР°РЅРЅС‹С…
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("OnlineStoreDbContext")));
 
-// Регистрация зависимостей
+// Р РµРіРёСЃС‚СЂР°С†РёСЏ Р·Р°РІРёСЃРёРјРѕСЃС‚РµР№
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
@@ -104,8 +104,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication();
-app.UseAuthorization();
 app.UseCors(policy =>
 {
     policy
@@ -114,6 +112,9 @@ app.UseCors(policy =>
         .AllowAnyHeader()
         .AllowAnyMethod();
 });
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
