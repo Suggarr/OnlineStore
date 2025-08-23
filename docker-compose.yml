@@ -34,29 +34,29 @@ services:
     depends_on:
       - postgres
 
-  # nginx:
-  #   container_name: nginx
-  #   image: nginx:latest
-  #   ports:
-  #     - "80:80"
-  #   volumes:
-  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-  #     - ./nginx/build:/usr/share/nginx/html
-  #   depends_on:
-  #     - webapi
+  # frontend:
+  #   container_name: frontend
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
   #   networks:
   #     - mynetwork
+  #   depends_on:
+  #     - backend
 
-  # ngrok:
-  #   container_name: ngrok
-  #   image: ngrok/ngrok:latest
-  #   command: http nginx:80 --url=moved-ideally-rabbit.ngrok-free.app
-  #   depends_on:
-  #     - nginx
-  #   env_file:
-  #     - .env
-  #   networks:
-  #     - mynetwork
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - mynetwork
+    depends_on:
+      # - frontend
+      - backend
 
 networks:
   mynetwork:

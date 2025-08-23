@@ -1,5 +1,5 @@
 async function loadProducts() {
-  const response = await fetch(`${API_BASE_URL}/api/products`, {
+  const response = await fetch(`/api/products`, {
     credentials: 'include'
   });
 
@@ -31,7 +31,7 @@ async function loadProducts() {
 async function addToCart(productId) {
   const dto = { productId: productId, quantity: 1 };
 
-  const response = await fetch(`${API_BASE_URL}/api/cartitems`, {
+  const response = await fetch(`/api/cartitems`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',

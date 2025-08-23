@@ -5,7 +5,7 @@ EXPOSE 5200
 ENV ASPNETCORE_URLS=http://+:5200
 
 # Образ для сборки проекта
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Копирование csproj-файлов по одному, чтобы кешировать restore
@@ -21,10 +21,12 @@ COPY . .
 # Сборка и публикация
 WORKDIR /src/OnlineStore.API
 RUN dotnet build OnlineStore.API.csproj -c Release -o /app/build
+
+FROM build AS publish
 RUN dotnet publish OnlineStore.API.csproj -c Release -o /app/publish
 
 # Финальный минимальный образ
 FROM base AS final
 WORKDIR /app
-COPY --from=build-env /app/publish .
+COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "OnlineStore.API.dll"]

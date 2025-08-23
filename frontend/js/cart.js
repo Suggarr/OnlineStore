@@ -1,5 +1,5 @@
 async function loadCart() {
-  const response = await fetch(`${API_BASE_URL}/api/CartItems`, {
+  const response = await fetch(`/api/CartItems`, {
     credentials: 'include'
   });
 
@@ -42,7 +42,7 @@ async function loadCart() {
 async function deleteItem(id) {
   if (!confirm("Удалить товар из корзины?")) return;
 
-  const response = await fetch(`${API_BASE_URL}/api/CartItems/${id}`, {
+  const response = await fetch(`/api/CartItems/${id}`, {
     method: "DELETE",
     credentials: 'include'
   });
@@ -61,7 +61,7 @@ async function updateQuantity(id, quantity) {
     return;
   }
 
-  const response = await fetch(`${API_BASE_URL}/api/CartItems/${id}/quantity`, {
+  const response = await fetch(`/api/CartItems/${id}/quantity`, {
     method: "PATCH",
     credentials: 'include',
     headers: {
@@ -81,7 +81,7 @@ async function updateQuantity(id, quantity) {
 async function clearCart() {
   if (!confirm("Очистить корзину?")) return;
 
-  const response = await fetch(`${API_BASE_URL}/api/CartItems/clear`, {
+  const response = await fetch(`/api/CartItems/clear`, {
     method: "DELETE",
     credentials: 'include'
   });
@@ -96,7 +96,7 @@ async function clearCart() {
 async function createOrder() {
   if (!confirm("Создать заказ из корзины?")) return;
 
-  const response = await fetch(`${API_BASE_URL}/api/Orders`, {
+  const response = await fetch(`/api/Orders`, {
     method: "POST",
     credentials: 'include'
   });
