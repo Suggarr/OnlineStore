@@ -8,7 +8,7 @@ namespace OnlineStore.Application.DTO
         [MaxLength(100)]
         public string Name { get; set; } = default!;
 
-        [MaxLength(500)]
+        [MaxLength(600)]
         public string Description { get; set; } = default!;
 
         [Required]

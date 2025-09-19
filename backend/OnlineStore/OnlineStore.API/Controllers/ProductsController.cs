@@ -45,9 +45,6 @@ namespace OnlineStore.WebAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<ProductDto>> Create([FromBody] CreateProductDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
             try
             {
                 var createdProduct = await _productService.CreateAsync(dto);

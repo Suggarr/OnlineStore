@@ -16,7 +16,7 @@ namespace OnlineStore.Infrastructure.Configurations
 
             builder.Property(c => c.Description)
                    .IsRequired()
-                   .HasMaxLength(500);
+                   .HasMaxLength(600);
 
             builder.Property(c => c.Image)
                    .IsRequired()
