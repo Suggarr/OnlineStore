@@ -27,6 +27,14 @@ namespace OnlineStore.WebAPI.Controllers
             return Ok(products);
         }
 
+        [HttpGet("by-categoryId/{id:guid}")]
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetByCategoryId(Guid id)
+        {
+            _logger.LogInformation($"Получение товаров по ID категории: {id}");
+            var products = await _productService.GetByCategoryIdAsync(id);
+            return Ok(products);
+        }
+
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<ProductDto>> GetById(Guid id)
         {

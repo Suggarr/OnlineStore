@@ -80,7 +80,7 @@ namespace OnlineStore.Application.Services
             existing.Image = dto.Image;
             existing.UpdatedAt = DateTime.UtcNow;
 
-            await _categoryRepository.UpdateAsync(existingCategory);
+            await _categoryRepository.UpdateAsync(existing);
 
             return true;
         }

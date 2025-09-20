@@ -22,7 +22,24 @@ namespace OnlineStore.Application.Services
                 Name = p.Name,
                 Description = p.Description,
                 Price = p.Price,
-                ImageUrl = p.ImageUrl
+                ImageUrl = p.ImageUrl,
+                CategoryId = p.CategoryId,
+                CategoryName = p.Category?.Name
+            });
+        }
+
+        public async Task<IEnumerable<ProductDto>> GetByCategoryIdAsync(Guid categoryId)
+        {
+            var products = await _repository.GetByCategoryIdAsync(categoryId);
+            return products.Select(p => new ProductDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                Price = p.Price,
+                ImageUrl = p.ImageUrl,
+                CategoryId = p.CategoryId,
+                CategoryName = p.Category?.Name
             });
         }
 
@@ -38,7 +55,9 @@ namespace OnlineStore.Application.Services
                 Name = product.Name,
                 Description = product.Description,
                 Price = product.Price,
-                ImageUrl = product.ImageUrl
+                ImageUrl = product.ImageUrl,
+                CategoryId = product.CategoryId,
+                CategoryName = product.Category?.Name
             };
         }
 
@@ -49,7 +68,8 @@ namespace OnlineStore.Application.Services
                 Name = dto.Name,
                 Description = dto.Description,
                 Price = dto.Price,
-                ImageUrl = dto.ImageUrl
+                ImageUrl = dto.ImageUrl,
+                CategoryId = dto.CategoryId
             };
 
             await _repository.AddAsync(product);
@@ -60,7 +80,8 @@ namespace OnlineStore.Application.Services
                 Name = product.Name,
                 Description = product.Description,
                 Price = product.Price,
-                ImageUrl = product.ImageUrl
+                ImageUrl = product.ImageUrl,
+                CategoryId = product.CategoryId
             };
         }
 
@@ -74,6 +95,7 @@ namespace OnlineStore.Application.Services
             existing.Description = dto.Description;
             existing.Price = dto.Price;
             existing.ImageUrl = dto.ImageUrl;
+            existing.CategoryId = dto.CategoryId;
 
             await _repository.UpdateAsync(existing);
             return true;

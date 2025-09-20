@@ -18,5 +18,8 @@ namespace OnlineStore.Application.DTO
         [Required]
         [Url]
         public string ImageUrl { get; set; } = default!;
+
+        [Required]
+        public Guid CategoryId { get; set; }
     }
 }
