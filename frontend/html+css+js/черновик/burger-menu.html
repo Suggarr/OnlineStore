@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OnlineStore — Электроника</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f5f6fa;
+      color: #333;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      background: white;
+      padding: 15px 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 1200;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+      color: royalblue;
+    }
+
+    /* --- меню --- */
+    .header-menu {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 250px;
+      height: 100vh;
+      background-color: royalblue;
+      padding: 20px;
+      box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      padding-top: 80px;
+    }
+
+    .header-menu nav a {
+      display: block;
+      padding: 12px 10px;
+      margin: 8px 0;
+      font-size: 18px;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: background 0.3s;
+    }
+
+    .header-menu nav a:hover {
+      background-color: rgba(255,255,255,0.2);
+    }
+
+    .menu-burger {
+      background-color: transparent;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      border: none;
+      z-index: 1100;
+    }
+
+    .menu-burger span,
+    .menu-burger span::before,
+    .menu-burger span::after {
+      display: block;
+      width: 28px;
+      height: 3px;
+      background-color: royalblue;
+      position: relative;
+      transition: transform 0.3s ease, background-color 0.3s ease;
+    }
+
+    .menu-burger span::before,
+    .menu-burger span::after {
+      content: '';
+      position: absolute;
+      left: 0;
+    }
+
+    .menu-burger span::before {
+      top: -8px;
+    }
+
+    .menu-burger span::after {
+      bottom: -8px;
+    }
+
+    .menu-burger.active span {
+      background: transparent;
+    }
+
+    .menu-burger.active span::before {
+      transform: rotate(45deg);
+      top: 0;
+      background: white;
+    }
+
+    .menu-burger.active span::after {
+      transform: rotate(-45deg);
+      bottom: 0;
+      background: white;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.4);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease;
+      z-index: 900;
+    }
+
+    .overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* --- поиск --- */
+    .search-bar {
+      padding: 10px 20px;
+      background: white;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .search-bar input {
+      width: 95%;
+      padding: 8px 25px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 14px;
+      outline: none;
+    }
+
+    .search-bar input:focus {
+      border-color: royalblue;
+      box-shadow: 0 0 0 2px rgba(65,105,225,0.3);
+    }
+
+    /* --- категории --- */
+    .categories {
+      display: flex;
+      gap: 10px;
+      padding: 15px 20px;
+      background: white;
+      border-bottom: 1px solid #ddd;
+      flex-wrap: wrap;
+    }
+
+    .categories button {
+      border: none;
+      background: #f0f2f5;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s, box-shadow 0.3s;
+      outline: none;
+    }
+
+    .categories button.active {
+      background: royalblue;
+      color: white;
+    }
+
+    .categories button:focus {
+      box-shadow: 0 0 0 3px rgba(65,105,225,0.5);
+    }
+
+    /* --- карточки товаров --- */
+    .products {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .product-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s;
+    }
+
+    .product-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .product-card img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+    }
+
+    .product-info {
+      padding: 15px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .product-info h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+
+    .product-info p {
+      margin: 0;
+      font-weight: bold;
+      color: royalblue;
+      font-size: 16px;
+    }
+
+    .add-to-cart {
+      margin-top: 10px;
+      border: none;
+      background: royalblue;
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .add-to-cart:hover {
+      background: darkblue;
+    }
+
+    .product-card img {
+  width: 100%;
+  height: 200px;
+  object-fit: contain; /* вписывается целиком */
+  background: #fff;    /* фон вокруг картинки */
+}
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>OnlineStore</h1>
+    <button class="menu-burger"><span></span></button>
+    <div class="header-menu">
+      <nav>
+        <a href="#">Главная</a>
+        <a href="#">Каталог</a>
+        <a href="#">Корзина</a>
+        <a href="#">История заказов</a>
+        <a href="#">Профиль</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="overlay"></div>
+
+  <!-- поиск -->
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Поиск товаров..." />
+  </div>
+
+  <!-- категории -->
+  <div class="categories">
+    <button data-category="Смартфоны">Смартфоны</button>
+    <button data-category="Ноутбуки">Ноутбуки</button>
+    <button data-category="Телевизоры">Телевизоры</button>
+    <button data-category="Наушники">Наушники</button>
+    <button data-category="Бытовая техника">Бытовая техника</button>
+  </div>
+
+  <!-- карточки товаров -->
+  <div class="products">
+    <div class="product-card" data-category="Смартфоны">
+      <img src="https://avatars.mds.yandex.net/i?id=d3fc6c4c6c5b684d95888f371815db9ae797ecfc-5481051-images-thumbs&n=13" alt="iPhone">
+      <div class="product-info">
+        <h3>iPhone 14 Pro</h3>
+        <p>120 000 ₽</p>
+        <button class="add-to-cart">В корзину</button>
+      </div>
+    </div>
+
+    <div class="product-card" data-category="Ноутбуки">
+      <img src="https://www.notebookcheck-ru.com/uploads/tx_nbc2/4_zu_3_Teaser_Apple_MacBook_Air_M2_1.JPG" alt="MacBook">
+      <div class="product-info">
+        <h3>MacBook Air M2</h3>
+        <p>150 000 ₽</p>
+        <button class="add-to-cart">В корзину</button>
+      </div>
+    </div>
+
+    <div class="product-card" data-category="Телевизоры">
+      <img src="https://www.lg.com/ru/images/tvs/md07511313/gallery/D-01.jpg" alt="LG TV">
+      <div class="product-info">
+        <h3>LG OLED TV 55"</h3>
+        <p>90 000 ₽</p>
+        <button class="add-to-cart">В корзину</button>
+      </div>
+    </div>
+
+    <div class="product-card" data-category="Наушники">
+      <img src="https://cdn1.ozone.ru/s3/multimedia-4/6063874520.jpg" alt="Sony WH-1000XM5">
+      <div class="product-info">
+        <h3>Sony WH-1000XM5</h3>
+        <p>32 000 ₽</p>
+        <button class="add-to-cart">В корзину</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const menuBurger = document.querySelector('.menu-burger');
+    const menu = document.querySelector('.header-menu');
+    const overlay = document.querySelector('.overlay');
+    const menuWidth = 250;
+
+    let translateX = menuWidth;
+
+    function openMenu() {
+      translateX = 0;
+      menu.style.transition = 'transform 0.3s ease';
+      menu.style.transform = `translateX(0)`;
+      overlay.classList.add('active');
+      menuBurger.classList.add('active');
+    }
+
+    function closeMenu() {
+      translateX = menuWidth;
+      menu.style.transition = 'transform 0.3s ease';
+      menu.style.transform = `translateX(100%)`;
+      overlay.classList.remove('active');
+      menuBurger.classList.remove('active');
+    }
+
+    menuBurger.addEventListener('click', () => {
+      if (translateX === 0) closeMenu();
+      else openMenu();
+    });
+
+    overlay.addEventListener('click', closeMenu);
+
+    // фильтрация по категориям
+    const categoryButtons = document.querySelectorAll('.categories button');
+    const products = document.querySelectorAll('.product-card');
+    let activeCategory = null;
+
+    categoryButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (activeCategory === btn.dataset.category) {
+          // отмена фильтрации
+          activeCategory = null;
+          btn.classList.remove('active');
+          products.forEach(p => p.style.display = 'block');
+        } else {
+          // фильтрация
+          activeCategory = btn.dataset.category;
+          categoryButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          products.forEach(p => {
+            p.style.display = (p.dataset.category === activeCategory) ? 'block' : 'none';
+          });
+        }
+      });
+    });
+
+    // поиск товаров
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', () => {
+      const searchText = searchInput.value.toLowerCase();
+      products.forEach(p => {
+        const title = p.querySelector('h3').textContent.toLowerCase();
+        if (title.includes(searchText)) {
+          p.style.display = 'block';
+        } else {
+          p.style.display = 'none';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
