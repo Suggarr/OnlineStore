@@ -22,7 +22,10 @@ body {
       font-size: 22px;
       color: royalblue;
     }
-
+    
+    main {
+      padding-top: 70px; /* чтобы контент не перекрывался header */
+    }
     /* --- меню --- */
     .header-menu {
       position: fixed;
@@ -55,7 +58,7 @@ body {
     .header-menu nav a:hover {
       background-color: rgba(255,255,255,0.2);
     }
-
+    
     .menu-burger {
       background-color: transparent;
       width: 40px;
