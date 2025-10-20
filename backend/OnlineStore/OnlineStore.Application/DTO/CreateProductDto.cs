@@ -5,11 +5,11 @@ namespace OnlineStore.Application.DTO;
 public class CreateProductDto
 {
     [Required]
-    [MaxLength(50)]//было 100
+    [MaxLength(50)]
     public string Name { get; set; } = default!;
 
     [Required]
-    [MaxLength(200)]//было 500
+    [MaxLength(500)]
     public string Description { get; set; } = default!;
 
     [Range(0.01, 100000)]
@@ -18,4 +18,7 @@ public class CreateProductDto
     [Required]
     [Url]
     public string ImageUrl { get; set; } = default!;
+
+    [Required]
+    public Guid CategoryId { get; set; }
 }
