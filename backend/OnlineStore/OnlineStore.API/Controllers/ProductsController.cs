@@ -5,7 +5,7 @@ using OnlineStore.Application.Interfaces;
 
 namespace OnlineStore.WebAPI.Controllers
 {
-    [Authorize]
+    [AllowAnonymous]
     [ApiController]
     [Route("api/[controller]")]
     public class ProductsController : ControllerBase

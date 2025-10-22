@@ -31,7 +31,6 @@ namespace OnlineStore.Application.Services
                 UserName = dto.Username,
                 Email = dto.Email,
                 PasswordHash = await _passwordHasher.HashPassword(dto.Password),
-                Role = UserRole.User
             };
 
             await _userRepository.AddAsync(user);
@@ -41,7 +40,8 @@ namespace OnlineStore.Application.Services
                 Id = user.Id,
                 Username = user.UserName,
                 Email = user.Email,
-                Role = user.Role.ToString()
+                Role = user.Role.ToString(),
+                CreatedAt = user.CreatedAt
             };
         }
 
@@ -67,7 +67,8 @@ namespace OnlineStore.Application.Services
                 Id = user.Id,
                 Username = user.UserName,
                 Email = user.Email,
-                Role = user.Role.ToString()
+                Role = user.Role.ToString(),
+                CreatedAt = user.CreatedAt
             };
         }
 
@@ -79,7 +80,8 @@ namespace OnlineStore.Application.Services
                 Id = u.Id,
                 Username = u.UserName,
                 Email = u.Email,
-                Role = u.Role.ToString()
+                Role = u.Role.ToString(),
+                CreatedAt = u.CreatedAt
             });
         }
 
