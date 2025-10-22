@@ -23,12 +23,19 @@ namespace OnlineStore.API.Controllers
         private Guid GetUserId()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userIdClaim == null)
+
+            if (string.IsNullOrEmpty(userIdClaim))
             {
-                _logger.LogWarning("Id пользователя не найден в токене");
-                throw new UnauthorizedAccessException("User ID claim not found");
+                _logger.LogWarning("Идентификатор пользователя не найден в токене.");
+                throw new UnauthorizedAccessException("Идентификатор пользователя не найден в токене.");
             }
-            return Guid.Parse(userIdClaim);
+
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                _logger.LogWarning($"Некорректный формат идентификатора пользователя в токене: {userIdClaim}");
+                throw new UnauthorizedAccessException("Некорректный формат идентификатора пользователя в токене.");
+            }
+            return userId;
         }
 
         [HttpGet]
@@ -42,7 +49,7 @@ namespace OnlineStore.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddToCart(CreateCartItemDto dto)
+        public async Task<IActionResult> AddToCart([FromBody] CreateCartItemDto dto)
         {
             var userId = GetUserId();
             _logger.LogInformation($"Добавление товара с ProductId {dto.ProductId} в корзину пользователя {userId}");
@@ -51,7 +58,7 @@ namespace OnlineStore.API.Controllers
             if (!added)
             {
                 _logger.LogWarning($"Не удалось добавить товар с ProductId {dto.ProductId} в корзину — товар не найден");
-                return NotFound("Product not found");
+                return NotFound($"Товар с ProductId {dto.ProductId} не найден");
             }
             return Ok();
         }

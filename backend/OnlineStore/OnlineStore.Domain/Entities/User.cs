@@ -18,5 +18,6 @@ namespace OnlineStore.Domain.Entities
 
         public ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
         public ICollection<Order> Orders { get; set; } = new List<Order>();
+        public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
     }
 }

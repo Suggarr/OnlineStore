@@ -73,10 +73,8 @@ namespace OnlineStore.Application.Services
 
                 await _cartRepository.AddAsync(cartItem);
             }
-
             return true;
         }
-
 
         public async Task<bool> UpdateQuantityAsync(Guid id, int quantity, Guid userId)
         {

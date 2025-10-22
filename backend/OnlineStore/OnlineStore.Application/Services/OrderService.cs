@@ -19,7 +19,7 @@ namespace OnlineStore.Application.Services
         {
             var cartItems = await _cartRepository.GetAllForUserAsync(userId);
             if (!cartItems.Any())
-                throw new InvalidOperationException("Cart is empty");
+                throw new InvalidOperationException("Корзина пустая");
 
             var order = new Order
             {

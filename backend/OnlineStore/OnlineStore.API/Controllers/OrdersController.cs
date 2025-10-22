@@ -23,16 +23,23 @@ namespace OnlineStore.API.Controllers
         private Guid GetUserId()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userIdClaim == null)
+
+            if (string.IsNullOrEmpty(userIdClaim))
             {
-                _logger.LogWarning("User ID claim not found in token.");
-                throw new Exception("User ID claim not found");
+                _logger.LogWarning("Идентификатор пользователя не найден в токене.");
+                throw new UnauthorizedAccessException("Идентификатор пользователя не найден в токене.");
             }
-            return Guid.Parse(userIdClaim);
+
+            if (!Guid.TryParse(userIdClaim, out var userId))
+            {
+                _logger.LogWarning($"Некорректный формат идентификатора пользователя в токене: {userIdClaim}");
+                throw new UnauthorizedAccessException("Некорректный формат идентификатора пользователя в токене.");
+            }
+            return userId;
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateOrder()
+        public async Task<ActionResult<OrderDto>> CreateOrder()
         {
             var userId = GetUserId();
             _logger.LogInformation("Пользователь {UserId} создает заказ", userId);

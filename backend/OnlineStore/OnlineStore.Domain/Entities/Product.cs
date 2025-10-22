@@ -10,5 +10,7 @@
 
         public Guid CategoryId { get; set; }
         public Category Category { get; set; } = default!;
+
+        public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
     }
 }

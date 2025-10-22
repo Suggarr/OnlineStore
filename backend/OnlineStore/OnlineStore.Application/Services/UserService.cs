@@ -99,13 +99,24 @@ namespace OnlineStore.Application.Services
         public async Task UpdatePasswordAsync(Guid id, UpdatePasswordDto updateUserPasswordDto)
         {
             var user = await _userRepository.GetByIdAsync(id);
-            if (user == null || !await _passwordHasher.VerifyPassword(user.PasswordHash, updateUserPasswordDto.OldPassword))
+            if (user == null)
             {
-                throw new InvalidOperationException();
+                throw new KeyNotFoundException("Пользователь не найден.");
             }
+
+            var isOldPasswordValid = await _passwordHasher.VerifyPassword(user.PasswordHash, updateUserPasswordDto.OldPassword);
+            if (!isOldPasswordValid)
+            {
+                throw new InvalidOperationException("Старый пароль неверный.");
+            }
+            //if (user == null || !await _passwordHasher.VerifyPassword(user.PasswordHash, updateUserPasswordDto.OldPassword))
+            //{
+            //    throw new InvalidOperationException();
+            //}
             user.PasswordHash = await _passwordHasher.HashPassword(updateUserPasswordDto.NewPassword);
             await _userRepository.UpdateAsync(user);
         }
+
 
         public async Task<bool> DeleteAsync(Guid id)
         {

@@ -21,67 +21,9 @@ namespace OnlineStore.API.Controllers
             _logger = logger;
         }
 
-        [HttpPost("register")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Register([FromBody] RegisterUserDto dto)
-        {
-            var user = await _userService.RegisterAsync(dto);
-            if (user == null)
-                return Conflict("Пользователь с таким email или именем уже существует.");
-
-            _logger.LogInformation("Пользователь {Email} успешно зарегистрировался", dto.Username);
-            return Ok();
-        }
-
-        [HttpPost("login")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Login([FromBody] LoginUserDto dto)
-        {
-            _logger.LogInformation("Попытка входа для email: {Email}", dto.Email);
-
-            var token = await _userService.LoginAsync(dto);
-            if (token == null)
-            {
-                _logger.LogWarning("Неудачная попытка входа для {Email}", dto.Email);
-                return Unauthorized("Неверный логин или пароль.");
-            }
-
-            var cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = false, //true для https
-                SameSite = SameSiteMode.Lax, // None для https
-                Expires = DateTimeOffset.UtcNow.AddMonths(6)
-            };
-
-            Response.Cookies.Append("AppCookie", token, cookieOptions);
-
-            _logger.LogInformation("Пользователь {Email} успешно вошел", dto.Email);
-            return Ok();
-        }
-
-        [Authorize]
-        [HttpPost("logout")]
-        public IActionResult Logout()
-        {
-            if (Request.Cookies.ContainsKey("AppCookie"))
-            {
-                var cookieOptions = new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = false, //true для https
-                    SameSite = SameSiteMode.Lax // None для https
-                };
-
-                Response.Cookies.Delete("AppCookie", cookieOptions);
-                _logger.LogInformation("Пользователь вышел из аккаунта.");
-            }
-            return NoContent();
-        }
-
         [Authorize(Roles = "Admin")]
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(Guid id)
+        public async Task<ActionResult<UserDto>> GetById(Guid id)
         {
             var user = await _userService.GetByIdAsync(id);
             if (user == null)
@@ -90,10 +32,9 @@ namespace OnlineStore.API.Controllers
             return Ok(user);
         }
 
-
         [Authorize]
         [HttpGet("infome")]
-        public async Task<IActionResult> GetCurrentUser()
+        public async Task<ActionResult<UserDto>> GetCurrentUser()
         {
             var userId = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (Guid.TryParse(userId, out Guid UserId))
@@ -113,7 +54,7 @@ namespace OnlineStore.API.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<ActionResult<UserDto>> GetAll()
         {
             _logger.LogInformation("Администратор запрашивает список всех пользователей");
             var users = await _userService.GetAllAsync();
@@ -170,10 +111,15 @@ namespace OnlineStore.API.Controllers
                     }
                     return Ok();
                 }
-                catch (InvalidOperationException)
+                catch (KeyNotFoundException ex)
                 {
-                    _logger.LogWarning($"Неудачная попытка смена пароля для пользователя с Id {UserId}");
-                    return Conflict();
+                    _logger.LogWarning($"Неудачная попытка смены пароля для пользователя {UserId}: {ex.Message}");
+                    return NotFound(); 
+                }
+                catch (InvalidOperationException ex)
+                {
+                    _logger.LogWarning($"Неверный старый пароль для пользователя {UserId}: {ex.Message}");
+                    return BadRequest(); 
                 }
             }
             _logger.LogWarning("Попытка несанкционированного доступа для обновления пароля");
