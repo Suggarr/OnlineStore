@@ -27,6 +27,7 @@ namespace OnlineStore.Application.Services
                 CreatedAt = DateTime.UtcNow,
                 Items = cartItems.Select(ci => new OrderItem
                 {
+                    ProductId = ci.ProductId,
                     ProductName = ci.Product.Name,
                     Price = ci.Product.Price,
                     Quantity = ci.Quantity,
@@ -47,6 +48,7 @@ namespace OnlineStore.Application.Services
                 CreatedAt = o.CreatedAt,
                 Items = o.Items.Select(i => new OrderItemDto
                 {
+                    ProductId = i.ProductId,
                     ProductName = i.ProductName,
                     Price = i.Price,
                     Quantity = i.Quantity,
@@ -67,6 +69,7 @@ namespace OnlineStore.Application.Services
                 CreatedAt = order.CreatedAt,
                 Items = order.Items.Select(i => new OrderItemDto
                 {
+                    ProductId = i.ProductId,
                     ProductName = i.ProductName,
                     Price = i.Price,
                     Quantity = i.Quantity,

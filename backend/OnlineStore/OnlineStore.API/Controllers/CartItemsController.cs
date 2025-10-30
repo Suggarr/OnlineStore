@@ -78,18 +78,66 @@ namespace OnlineStore.API.Controllers
             return Ok(item);
         }
 
+        [HttpGet("contains/{productId:guid}")]
+        public async Task<ActionResult<bool>> IsInCart(Guid productId)
+        {
+            var userId = GetUserId();
+            _logger.LogInformation($"Проверка наличия товара с ProductId {productId} в корзине пользователя {userId}");
+            var isInCart = await _cartService.IsProductInCartAsync(userId, productId);
+            return Ok(isInCart);
+        }
+
+        //[HttpPatch("{id:guid}/quantity")]
+        //public async Task<IActionResult> UpdateQuantity(Guid id, [FromBody] UpdateCartItemQuantityDto dto)
+        //{
+        //    var userId = GetUserId();
+        //    _logger.LogInformation($"Обновление количества товара с Id {id} до {dto.Quantity} для пользователя {userId}");
+        //    var updated = await _cartService.UpdateQuantityAsync(id, dto.Quantity, userId);
+        //    if (!updated)
+        //    {
+        //        _logger.LogWarning($"Не удалось обновить количество — товар с Id {id} не найден в корзине пользователя {userId}");
+        //        return NotFound();
+        //    }
+        //    return NoContent();
+        //}
+
         [HttpPatch("{id:guid}/quantity")]
         public async Task<IActionResult> UpdateQuantity(Guid id, [FromBody] UpdateCartItemQuantityDto dto)
         {
             var userId = GetUserId();
-            _logger.LogInformation($"Обновление количества товара с Id {id} до {dto.Quantity} для пользователя {userId}");
-            var updated = await _cartService.UpdateQuantityAsync(id, dto.Quantity, userId);
-            if (!updated)
+
+            _logger.LogInformation($"Пользователь {userId} пытается изменить количество позиции корзины {id} на {dto.Quantity}.");
+
+            try
             {
-                _logger.LogWarning($"Не удалось обновить количество — товар с Id {id} не найден в корзине пользователя {userId}");
-                return NotFound();
+                var updated = await _cartService.UpdateQuantityAsync(id, dto.Quantity, userId);
+
+                if (!updated)
+                {
+                    _logger.LogWarning($"Не удалось обновить количество — пользователь {userId} попытался изменить количество несуществующей позиции корзины {id}.");
+                    return NotFound("Товар не найден в корзине.");
+                }
+
+                if (dto.Quantity <= 0)
+                {
+                    _logger.LogInformation($"Пользователь {userId} удалил товар из корзины (позиция {id}), так как указал количество 0 или меньше.");
+                }
+                else
+                {
+                    _logger.LogInformation($"Пользователь {userId} успешно обновил количество товара в корзине (позиция {id}) до {dto.Quantity}.");
+                }
+                return NoContent();
             }
-            return NoContent();
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning($"Пользователь {userId} указал некорректное количество {dto.Quantity} для позиции корзины {id}: {ex.Message}");
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,$"Произошла непредвиденная ошибка при обновлении количества позиции корзины {id} пользователем {userId}.");
+                return StatusCode(500, "Произошла ошибка при обновлении количества.");
+            }
         }
 
         [HttpDelete("{id:guid}")]

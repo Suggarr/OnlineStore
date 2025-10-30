@@ -53,17 +53,14 @@ namespace OnlineStore.Application.Services
             if (product is null)
                 return false;
 
-            // Проверяем, есть ли уже такой товар в корзине пользователя
             var existingItem = await _cartRepository.GetByProductIdAsync(dto.ProductId, userId);
             if (existingItem != null)
             {
-                // Если есть, просто увеличиваем количество
                 existingItem.Quantity += dto.Quantity;
                 await _cartRepository.UpdateQuantityAsync(existingItem.Id, existingItem.Quantity, userId);
             }
             else
             {
-                // Если нет — создаем новый
                 var cartItem = new CartItem
                 {
                     ProductId = product.Id,
@@ -76,11 +73,26 @@ namespace OnlineStore.Application.Services
             return true;
         }
 
+        //public async Task<bool> UpdateQuantityAsync(Guid id, int quantity, Guid userId)
+        //{
+        //    var item = await _cartRepository.GetByIdAsync(id, userId);
+        //    if (item == null)
+        //        return false;
+
+        //    await _cartRepository.UpdateQuantityAsync(id, quantity, userId);
+        //    return true;
+        //}
+
         public async Task<bool> UpdateQuantityAsync(Guid id, int quantity, Guid userId)
         {
             var item = await _cartRepository.GetByIdAsync(id, userId);
             if (item == null)
                 return false;
+            if (quantity <= 0)
+            {
+                await _cartRepository.DeleteAsync(id, userId);
+                return true;
+            }
 
             await _cartRepository.UpdateQuantityAsync(id, quantity, userId);
             return true;
@@ -99,6 +111,11 @@ namespace OnlineStore.Application.Services
         public async Task ClearAsync(Guid userId)
         {
             await _cartRepository.ClearAsync(userId);
+        }
+
+        public async Task<bool> IsProductInCartAsync(Guid userId, Guid productId)
+        {
+            return await _cartRepository.ExistsByUserAndProductAsync(userId, productId);
         }
     }
 }

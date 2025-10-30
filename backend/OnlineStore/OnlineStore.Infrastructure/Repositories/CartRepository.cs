@@ -71,5 +71,10 @@ namespace OnlineStore.Infrastructure.Repositories
             _context.CartItems.RemoveRange(items);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<bool> ExistsByUserAndProductAsync(Guid productId, Guid userId)
+        {
+            return await _context.CartItems.AnyAsync(c => c.ProductId == productId && c.UserId == userId);
+        }
     }
 }

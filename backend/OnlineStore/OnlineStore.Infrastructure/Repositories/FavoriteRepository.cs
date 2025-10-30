@@ -38,9 +38,14 @@ namespace OnlineStore.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(Guid id, Guid userId)
+        public async Task<bool> ExistsByUserAndProductAsync(Guid userId, Guid productId)
         {
-            var favorite = await _context.Favorites.FirstOrDefaultAsync(c => c.Id == id && c.UserId == userId);
+            return await _context.Favorites.AnyAsync(f => f.UserId == userId && f.ProductId == productId);
+        }
+
+        public async Task DeleteAsync(Guid favoriteId, Guid userId)
+        {
+            var favorite = await _context.Favorites.FirstOrDefaultAsync(c => c.Id == favoriteId && c.UserId == userId);
             if (favorite != null)
             {
                 _context.Favorites.Remove(favorite);

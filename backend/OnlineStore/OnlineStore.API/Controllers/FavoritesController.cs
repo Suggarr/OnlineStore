@@ -42,10 +42,19 @@ namespace OnlineStore.API.Controllers
         public async Task<ActionResult<FavoriteDto>> GetUserFavorites()
         {
             var userId = GetUserId();
-            _logger.LogInformation($"Пользователь {userId} запрашивает информацию об избранных товарах");
+            _logger.LogInformation($"Пользователь {userId} запрашивает список избранных товаров");
 
             var favorites = await _favoriteService.GetFavoritesForUserAsync(userId);
             return Ok(favorites);
+        }
+
+        [HttpGet("contains/{productId:guid}")]
+        public async Task<IActionResult> IsFavoriteProduct(Guid productId)
+        {
+            var userId = GetUserId();
+            var favorite = await _favoriteService.IsFavoriteAsync(userId, productId);
+            _logger.LogInformation($"Пользователь {userId} проверяет, находится ли товар {productId} в избранных"); ;
+            return Ok(favorite);
         }
 
         [HttpPost("{productId:guid}/toggle")]

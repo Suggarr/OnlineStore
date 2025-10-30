@@ -3,12 +3,6 @@ using Microsoft.Extensions.Logging;
 using OnlineStore.Application.DTO;
 using OnlineStore.Application.Interfaces;
 using OnlineStore.Domain.Entities;
-using OnlineStore.Infrastructure.Repositories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OnlineStore.Application.Services
 {
@@ -43,6 +37,11 @@ namespace OnlineStore.Application.Services
             });
         }
 
+        public async Task<bool> IsFavoriteAsync(Guid userId, Guid productId)
+        {
+            return await _favoriteRepository.ExistsByUserAndProductAsync(userId, productId);
+        }
+
         public async Task<bool> ToggleFavoriteAsync(Guid userId, Guid productId)
         {
             var productExists = await _productRepository.GetByIdAsync(productId);
@@ -55,7 +54,7 @@ namespace OnlineStore.Application.Services
             if (favorite != null)
             {
                 await _favoriteRepository.DeleteAsync(favorite.Id, userId);
-                return false; 
+                return false;
             }
 
             var newFavorite = new Favorite
@@ -65,7 +64,7 @@ namespace OnlineStore.Application.Services
             };
 
             await _favoriteRepository.AddAsync(newFavorite);
-            return true; 
+            return true;
         }
     }
 }

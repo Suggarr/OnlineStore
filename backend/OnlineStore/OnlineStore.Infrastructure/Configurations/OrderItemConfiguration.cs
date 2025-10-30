@@ -15,6 +15,9 @@ namespace OnlineStore.Infrastructure.Configurations
                    .HasForeignKey(oi => oi.OrderId)
                    .OnDelete(DeleteBehavior.Cascade);
 
+            builder.Property(oi => oi.ProductId)
+                   .IsRequired();
+
             builder.Property(oi => oi.ProductName)
                    .IsRequired()
                    .HasMaxLength(255);
