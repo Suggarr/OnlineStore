@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using OnlineStore.Application.DTO;
 using OnlineStore.Application.Interfaces;
-using System.Security.Claims;
+using OnlineStore.Application.Services;
 
 namespace OnlineStore.API.Controllers
 {
@@ -20,28 +20,10 @@ namespace OnlineStore.API.Controllers
             _logger = logger;
         }
 
-        private Guid GetUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrEmpty(userIdClaim))
-            {
-                _logger.LogWarning("Идентификатор пользователя не найден в токене.");
-                throw new UnauthorizedAccessException("Идентификатор пользователя не найден в токене.");
-            }
-
-            if (!Guid.TryParse(userIdClaim, out var userId))
-            {
-                _logger.LogWarning($"Некорректный формат идентификатора пользователя в токене: {userIdClaim}");
-                throw new UnauthorizedAccessException("Некорректный формат идентификатора пользователя в токене.");
-            }
-            return userId;
-        }
-
         [HttpPost]
         public async Task<ActionResult<OrderDto>> CreateOrder()
         {
-            var userId = GetUserId();
+            var userId = UserHelper.GetUserId(User, _logger);
             _logger.LogInformation("Пользователь {UserId} создает заказ", userId);
 
             try
@@ -61,7 +43,7 @@ namespace OnlineStore.API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<OrderDto>>> GetOrders()
         {
-            var userId = GetUserId();
+            var userId = UserHelper.GetUserId(User, _logger);
             _logger.LogInformation($"Пользователь {userId} запрашивает список заказов");
 
             var orders = await _orderService.GetOrdersAsync(userId);
@@ -71,7 +53,7 @@ namespace OnlineStore.API.Controllers
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<OrderDto>> GetOrderById(Guid id)
         {
-            var userId = GetUserId();
+            var userId = UserHelper.GetUserId(User, _logger);
             _logger.LogInformation($"Пользователь {userId} запрашивает заказ с Id {id}");
 
             var order = await _orderService.GetOrderByIdAsync(id, userId);

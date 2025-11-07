@@ -42,7 +42,7 @@ namespace OnlineStore.API.Controllers
             return Ok(category);
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "AdminPolicy")]
         [HttpPost]
         public async Task<ActionResult<CategoryDto>> Create([FromBody] CreateCategoryDto dto)
         {
@@ -59,7 +59,7 @@ namespace OnlineStore.API.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "AdminPolicy")]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update([FromBody] UpdateCategoryDto dto, Guid id)
         {
@@ -67,7 +67,7 @@ namespace OnlineStore.API.Controllers
             return Ok(updated);
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "AdminPolicy")]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {

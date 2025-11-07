@@ -21,7 +21,7 @@ namespace OnlineStore.API.Controllers
             _logger = logger;
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "AdminPolicy")]
         [HttpGet("{id}")]
         public async Task<ActionResult<UserDto>> GetById(Guid id)
         {
@@ -52,7 +52,7 @@ namespace OnlineStore.API.Controllers
             return Unauthorized();
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "AdminPolicy")]
         [HttpGet]
         public async Task<ActionResult<UserDto>> GetAll()
         {
@@ -74,7 +74,7 @@ namespace OnlineStore.API.Controllers
                     return BadRequest(ModelState);
                 }
                 var success = await _userService.UpdateAsync(UserId, dto);
-                _logger.LogInformation($"Пользователь с Id {UserId} пытается обновить свои данные (Email/Username)");
+                _logger.LogInformation($"Пользователь с Id {UserId} обновляет свои данные (Email/Username)");
                 if (!success)
                 {
                     _logger.LogWarning($"Пользователь с Id {UserId} не найден при обновлении профиля");
@@ -94,7 +94,7 @@ namespace OnlineStore.API.Controllers
             var userId = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (Guid.TryParse(userId, out Guid UserId))
             {
-                _logger.LogInformation($"Пользователь с Id {UserId} пытается обновить свой пароль");
+                _logger.LogInformation($"Пользователь с Id {UserId} обновляет свой пароль");
                 try
                 {
                     await _userService.UpdatePasswordAsync(UserId, updatePasswordDto);
@@ -126,11 +126,11 @@ namespace OnlineStore.API.Controllers
             return Unauthorized();
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "SuperAdminPolicy")]
         [HttpPatch("{id}/role")]
         public async Task<IActionResult> ChangeRole(Guid id, [FromBody] UpdateUserRoleDto dto)
         {
-            _logger.LogInformation($"Администратор пытается изменить роль пользователя с Id {id} на {dto.Role}");
+            _logger.LogInformation($"Главный администратор изменяет роль пользователя с Id {id} на {dto.Role}");
             var success = await _userService.ChangeUserRoleAsync(id, dto.Role);
             if (!success)
             {
@@ -141,11 +141,11 @@ namespace OnlineStore.API.Controllers
             return Ok();
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "SuperAdminPolicy")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            _logger.LogInformation($"Администратор пытается удалить пользователя с Id {id}");
+            _logger.LogInformation($"Главный администратор удаляет пользователя с Id {id}");
             var success = await _userService.DeleteAsync(id);
             if (!success)
             {

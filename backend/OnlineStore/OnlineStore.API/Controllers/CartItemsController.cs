@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using OnlineStore.Application.DTO;
 using OnlineStore.Application.Interfaces;
+using OnlineStore.Application.Services;
 using System.Security.Claims;
 
 namespace OnlineStore.API.Controllers
@@ -20,28 +21,10 @@ namespace OnlineStore.API.Controllers
             _logger = logger;
         }
 
-        private Guid GetUserId()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrEmpty(userIdClaim))
-            {
-                _logger.LogWarning("Идентификатор пользователя не найден в токене.");
-                throw new UnauthorizedAccessException("Идентификатор пользователя не найден в токене.");
-            }
-
-            if (!Guid.TryParse(userIdClaim, out var userId))
-            {
-                _logger.LogWarning($"Некорректный формат идентификатора пользователя в токене: {userIdClaim}");
-                throw new UnauthorizedAccessException("Некорректный формат идентификатора пользователя в токене.");
-            }
-            return userId;
-        }
-
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CartItemDto>>> GetAll()
         {
-            var userId = GetUserId();
+            var userId = UserHelper.GetUserId(User, _logger);
             _logger.LogInformation($"Получение всех товаров в корзине для пользователя с Id {userId}");
 
             var items = await _cartService.GetAllAsync(userId);
@@ -51,7 +34,7 @@ namespace OnlineStore.API.Controllers
         [HttpPost]
         public async Task<IActionResult> AddToCart([FromBody] CreateCartItemDto dto)
         {
-            var userId = GetUserId();
+            var userId = UserHelper.GetUserId(User, _logger);
             _logger.LogInformation($"Добавление товара с ProductId {dto.ProductId} в корзину пользователя {userId}");
 
             var added = await _cartService.AddToCartAsync(userId, dto);
@@ -66,7 +49,7 @@ namespace OnlineStore.API.Controllers
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<CartItemDto>> GetById(Guid id)
         {
-            var userId = GetUserId();
+            var userId = UserHelper.GetUserId(User, _logger);
             _logger.LogInformation($"Получение товара из корзины с Id {id} для пользователя {userId}");
 
             var item = await _cartService.GetByIdAsync(id, userId);
@@ -81,30 +64,16 @@ namespace OnlineStore.API.Controllers
         [HttpGet("contains/{productId:guid}")]
         public async Task<ActionResult<bool>> IsInCart(Guid productId)
         {
-            var userId = GetUserId();
+            var userId = UserHelper.GetUserId(User, _logger);
             _logger.LogInformation($"Проверка наличия товара с ProductId {productId} в корзине пользователя {userId}");
             var isInCart = await _cartService.IsProductInCartAsync(userId, productId);
             return Ok(isInCart);
         }
 
-        //[HttpPatch("{id:guid}/quantity")]
-        //public async Task<IActionResult> UpdateQuantity(Guid id, [FromBody] UpdateCartItemQuantityDto dto)
-        //{
-        //    var userId = GetUserId();
-        //    _logger.LogInformation($"Обновление количества товара с Id {id} до {dto.Quantity} для пользователя {userId}");
-        //    var updated = await _cartService.UpdateQuantityAsync(id, dto.Quantity, userId);
-        //    if (!updated)
-        //    {
-        //        _logger.LogWarning($"Не удалось обновить количество — товар с Id {id} не найден в корзине пользователя {userId}");
-        //        return NotFound();
-        //    }
-        //    return NoContent();
-        //}
-
         [HttpPatch("{id:guid}/quantity")]
         public async Task<IActionResult> UpdateQuantity(Guid id, [FromBody] UpdateCartItemQuantityDto dto)
         {
-            var userId = GetUserId();
+            var userId = UserHelper.GetUserId(User, _logger);
 
             _logger.LogInformation($"Пользователь {userId} пытается изменить количество позиции корзины {id} на {dto.Quantity}.");
 
@@ -143,7 +112,7 @@ namespace OnlineStore.API.Controllers
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var userId = GetUserId();
+            var userId = UserHelper.GetUserId(User, _logger);
             _logger.LogInformation($"Удаление товара с Id {id} из корзины пользователя {userId}");
 
             var deleted = await _cartService.DeleteAsync(id, userId);
@@ -158,7 +127,7 @@ namespace OnlineStore.API.Controllers
         [HttpDelete("clear")]
         public async Task<IActionResult> Clear()
         {
-            var userId = GetUserId();
+            var userId = UserHelper.GetUserId(User, _logger);
             _logger.LogInformation($"Очистка корзины пользователя с Id {userId}");
 
             await _cartService.ClearAsync(userId);

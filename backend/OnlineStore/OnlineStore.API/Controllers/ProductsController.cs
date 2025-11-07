@@ -49,7 +49,7 @@ namespace OnlineStore.WebAPI.Controllers
             return Ok(product);
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "AdminPolicy")]
         [HttpPost]
         public async Task<ActionResult<ProductDto>> Create([FromBody] CreateProductDto dto)
         {
@@ -66,7 +66,7 @@ namespace OnlineStore.WebAPI.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "AdminPolicy")]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductDto dto)
         {
@@ -84,7 +84,7 @@ namespace OnlineStore.WebAPI.Controllers
             return Ok(id);
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "AdminPolicy")]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {

@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OnlineStore.API.Middlewares;
 using OnlineStore.Application.Interfaces;
+using OnlineStore.Application.Services;
 using OnlineStore.Infrastructure.Data;
 using OnlineStore.Infrastructure.Repositories;
-using System.Text;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using OnlineStore.Application.Services;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,8 +45,14 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminPolicy", policy =>
+        policy.RequireRole("Admin", "SuperAdmin"));
 
+    options.AddPolicy("SuperAdminPolicy", policy =>
+        policy.RequireRole("SuperAdmin"));
+});
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -117,7 +124,10 @@ app.UseCors(policy =>
         .AllowAnyMethod();
 });
 
+app.UseRouting();
 app.UseAuthentication();
+
+app.UseMiddleware<SuperAdminProtectionMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
