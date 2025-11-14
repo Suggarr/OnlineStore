@@ -1,6 +1,7 @@
 async function loadProducts() {
-  const response = await fetch(`/api/products`, {
-    credentials: 'include'
+  const response = await fetch(`http://localhost:5200/api/products`, {
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' }
   });
 
   if (!response.ok) {
@@ -31,7 +32,7 @@ async function loadProducts() {
 async function addToCart(productId) {
   const dto = { productId: productId, quantity: 1 };
 
-  const response = await fetch(`/api/cartitems`, {
+  const response = await fetch(`http://localhost:5200/api/CartItems`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',

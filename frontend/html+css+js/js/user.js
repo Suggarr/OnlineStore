@@ -5,7 +5,7 @@ let currentEmail = '';
 
 async function loadUserProfile() {
     try {
-    const response = await fetch(`/api/users/infome`, { credentials: 'include' });
+    const response = await fetch(`http://localhost:5200/api/users/infome`, { credentials: 'include' });
     if (!response.ok) {
         alert('Не удалось загрузить данные пользователя');
         return;
@@ -49,7 +49,7 @@ async function updateProfile() {
     alert('Заполните оба поля');
     return;
     }
-    const response = await fetch(`/api/users/infome/name`, {
+    const response = await fetch(`http://localhost:5200/api/users/infome/name`, {
     method: 'PUT',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -96,7 +96,7 @@ async function changePassword() {
     // alert('Пароль должен быть не менее 8 символов');
     // return;
     // }
-    const response = await fetch(`/api/users/infome/password`, {
+    const response = await fetch(`http://localhost:5200/api/users/infome/password`, {
     method: 'PATCH',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -116,7 +116,7 @@ async function changePassword() {
     }
 }
 async function logout() {
-    const response = await fetch(`/api/Users/logout`, {
+    const response = await fetch(`http://localhost:5200/api/auth/logout`, {
     method: 'POST',
     credentials: 'include'
     });
@@ -133,7 +133,7 @@ function showTab(tabId) {
 }
 async function loadAllUsers() {
     try {
-    const response = await fetch(`/api/users`, { credentials: 'include' });
+    const response = await fetch(`http://localhost:5200/api/users`, { credentials: 'include' });
     if (!response.ok) {
         alert('Не удалось загрузить пользователей');
         return;
@@ -157,7 +157,7 @@ async function loadAllUsers() {
 }
 async function loadAllProducts() {
     try {
-    const response = await fetch(`/api/products`, { credentials: 'include' });
+    const response = await fetch(`http://localhost:5200/api/products`, { credentials: 'include' });
     if (!response.ok) {
         alert('Не удалось загрузить товары');
         return;
@@ -217,7 +217,7 @@ async function saveProductChanges() {
     imageUrl: document.getElementById('editProductImageUrl').value.trim()
     };
 
-    const response = await fetch(`/api/products/${editingProductId}`, {
+    const response = await fetch(`http://localhost:5200/api/products/${editingProductId}`, {
     method: 'PUT',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -236,7 +236,7 @@ async function saveProductChanges() {
 async function deleteProduct(id) {
     if (!confirm('Вы уверены, что хотите удалить этот товар?')) return;
 
-    const response = await fetch(`/api/products/${id}`, {
+    const response = await fetch(`http://localhost:5200/api/products/${id}`, {
     method: 'DELETE',
     credentials: 'include'
     });
@@ -263,7 +263,7 @@ async function createProduct() {
     const newProduct = { name, price, description, imageUrl };
 
     try {
-    const response = await fetch(`/api/products`, {
+    const response = await fetch(`http://localhost:5200/api/products`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

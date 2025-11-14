@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import "./catalog.css";
 
 type Category = {
     id: string;
@@ -19,6 +21,7 @@ type Product = {
 export default function CatalogPage() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [productsByCategory, setProductsByCategory] = useState<Record<string, Product[]>>({});
+    const router = useRouter();
 
     useEffect(() => {
         async function fetchCategories() {
@@ -52,18 +55,17 @@ export default function CatalogPage() {
                     <h2>{cat.name}</h2>
                     <div className="products">
                         {productsByCategory[cat.id]?.map((p) => (
-                            <div key={p.id} className="product-card">
-                                <div className="img-container">
+                            <div key={p.id} className="product-card" onClick={() => router.push(`/products/${p.id}`)}>
+                                <><div className="img-container">
                                     <img src={p.imageUrl} alt={p.name} />
                                     <button className="add-to-cart">В корзину</button>
-                                </div>
-                                <h3>{p.name}</h3>
-                                <p>{p.price.toLocaleString("ru-RU")} $</p>
+                                </div><h3>{p.name}</h3><p>{p.price.toLocaleString("ru-RU")} $</p></>
                             </div>
                         ))}
                     </div>
                 </section>
-            ))}
+            ))
+            }
 
             <style jsx>{`
                 .catalog {
@@ -191,6 +193,6 @@ export default function CatalogPage() {
                     }
                 }
             `}</style>
-        </div>
+        </div >
     );
 }

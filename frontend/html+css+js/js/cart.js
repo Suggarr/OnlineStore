@@ -1,6 +1,8 @@
 async function loadCart() {
-  const response = await fetch(`/api/CartItems`, {
-    credentials: 'include'
+  const response = await fetch(`http://localhost:5200/api/cartitems`, {
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' }
+    
   });
 
   if (!response.ok) {
@@ -42,7 +44,7 @@ async function loadCart() {
 async function deleteItem(id) {
   if (!confirm("Удалить товар из корзины?")) return;
 
-  const response = await fetch(`/api/CartItems/${id}`, {
+  const response = await fetch(`http://localhost:5200/api/CartItems/${id}`, {
     method: "DELETE",
     credentials: 'include'
   });
@@ -61,7 +63,7 @@ async function updateQuantity(id, quantity) {
     return;
   }
 
-  const response = await fetch(`/api/CartItems/${id}/quantity`, {
+  const response = await fetch(`http://localhost:5200/api/CartItems/${id}/quantity`, {
     method: "PATCH",
     credentials: 'include',
     headers: {
@@ -81,7 +83,7 @@ async function updateQuantity(id, quantity) {
 async function clearCart() {
   if (!confirm("Очистить корзину?")) return;
 
-  const response = await fetch(`/api/CartItems/clear`, {
+  const response = await fetch(`http://localhost:5200/api/CartItems/clear`, {
     method: "DELETE",
     credentials: 'include'
   });
@@ -96,7 +98,7 @@ async function clearCart() {
 async function createOrder() {
   if (!confirm("Создать заказ из корзины?")) return;
 
-  const response = await fetch(`/api/Orders`, {
+  const response = await fetch(`http://localhost:5200/api/Orders`, {
     method: "POST",
     credentials: 'include'
   });

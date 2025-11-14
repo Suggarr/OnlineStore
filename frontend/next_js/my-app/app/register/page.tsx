@@ -1,28 +1,27 @@
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { getCurrentUser } from "@/utils/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
-
-  // форма
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-
-  // UI state
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const { login } = useAuth();
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setSuccess("");
 
-    // простая валидация на клиенте
+    // валидация
     if (!username.trim() || !email.trim() || !password) {
       setError("Пожалуйста, заполните все поля.");
       return;
@@ -39,7 +38,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       // 1) Регистрируем пользователя
-      const regRes = await fetch("http://localhost:5200/api/users/register", {
+      const regRes = await fetch("http://localhost:5200/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -47,7 +46,6 @@ export default function RegisterPage() {
           email,
           password,
         }),
-        // no credentials here — register возвращает 200/409, но cookie ставит login
       });
 
       if (!regRes.ok) {
@@ -55,26 +53,29 @@ export default function RegisterPage() {
         throw new Error(txt || "Ошибка при регистрации");
       }
 
-      // 2) После успешной регистрации — сразу логинимся (бек кладёт AppCookie)
-      const loginRes = await fetch("http://localhost:5200/api/users/login", {
+      // 2) После успешной регистрации — логинимся
+      const loginRes = await fetch("http://localhost:5200/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // обязательно — чтобы cookie с токеном сохранилась
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
       if (!loginRes.ok) {
         const txt = await loginRes.text().catch(() => "");
-        // Если логин не удался — сообщаем, но регистрация уже прошла
         setSuccess("Регистрация прошла. Пожалуйста, выполните вход.");
         setLoading(false);
         router.push("/login");
         return;
       }
 
-      // Успешная регистрация + логин
+      // Получаем данные пользователя после успешного входа
+      const user = await getCurrentUser();
+      if (user) {
+        login(user); // Обновляем контекст
+      }
+
       setSuccess("Регистрация и вход выполнены успешно! Перенаправление...");
-      // небольшой таймаут, чтобы пользователь увидел сообщение
       setTimeout(() => router.push("/profile"), 900);
     } catch (err: any) {
       setError(err.message || "Неизвестная ошибка");

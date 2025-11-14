@@ -1,7 +1,7 @@
 "use client";
-
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { LucideHeart } from 'lucide-react';
 import "./product.css";
 
 interface ProductDto {
@@ -23,6 +23,7 @@ interface FavoriteDto {
 }
 
 export default function ProductPage() {
+  const router = useRouter();
   const { id } = useParams();
   const [product, setProduct] = useState<ProductDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,23 +44,26 @@ export default function ProductPage() {
         setProduct(prodData);
 
         // 2) Получаем избранное пользователя и смотрим, есть ли этот товар
-        const favRes = await fetch("http://localhost:5200/api/Favorites", {
+        const favRes = await fetch(`http://localhost:5200/api/Favorites/contains/${id}`, {
           credentials: "include",
         });
         if (favRes.ok) {
-          const favs: FavoriteDto[] = await favRes.json();
-          const found = favs.some(
-            (f) =>
-              (f.product && (f.product as any).id === prodData.id) ||
-              // на случай другой структуры
-              (f as any).productId === prodData.id ||
-              (f as any).product?.id === prodData.id
-          );
-          setIsFavorite(found);
+          const isFavorite = await favRes.json();
+          setIsFavorite(Boolean(isFavorite));
         } else {
           // если неавторизован или ошибка — считаем не в избранном
           setIsFavorite(false);
         }
+        const cartRes = await fetch(`http://localhost:5200/api/CartItems/contains/${id}`, {
+          credentials: "include",
+        });
+        if (cartRes.ok) {
+          const isInCart = await cartRes.json();
+          setAddedToCart(Boolean(isInCart));
+        } else {
+          setAddedToCart(false);
+        }
+
       } catch (err) {
         console.error(err);
         setError("Не удалось загрузить товар.");
@@ -74,15 +78,19 @@ export default function ProductPage() {
   const handleAddToCart = async () => {
     if (!product) return;
     try {
-      const res = await fetch("http://localhost:5200/api/Cart", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ productId: product.id, quantity: 1 }),
-      });
-      if (!res.ok) throw new Error("Ошибка при добавлении в корзину");
-      setAddedToCart(true);
-      setTimeout(() => setAddedToCart(false), 2000);
+      if (!addedToCart) {
+        const res = await fetch("http://localhost:5200/api/CartItems", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ productId: product.id, quantity: 1 }),
+        });
+        if (!res.ok) throw new Error("Ошибка при добавлении в корзину");
+        setAddedToCart(true);
+      } 
+      setTimeout(() => {
+        router.push("/cart");
+      }, 1000);
     } catch (err) {
       alert("Ошибка добавления в корзину.");
       console.error(err);
@@ -146,20 +154,10 @@ export default function ProductPage() {
             title={isFavorite ? "Убрать из избранного" : "Добавить в избранное"}
             disabled={favLoading}
           >
-            {/* простая икра SVG сердца */}
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden>
-              <path
-                d="M12 21s-7.5-4.93-10-8.01C-0.03 7.71 3.6 3 7.8 5.4 9.6 6.5 12 9 12 9s2.4-2.5 4.2-3.6C20.4 3 24.03 7.71 22 12.99 19.5 16.07 12 21 12 21z"
-                fill={isFavorite ? "#ef4444" : "none"}
-                stroke={isFavorite ? "transparent" : "#2563eb"}
-                strokeWidth="1.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <span className="visually-hidden">
-              {isFavorite ? "В избранном" : "В избранное"}
-            </span>
+            <LucideHeart
+              color={isFavorite ? "#e0245e" : "#888888"}
+              fill={isFavorite ? "#e0245e" : "#888888"}
+            />
           </button>
         </div>
 
@@ -168,12 +166,11 @@ export default function ProductPage() {
         <p className="description">{product.description}</p>
 
         <div className="purchase-row">
-          <p className="price">{product.price.toFixed(2)} ₽</p>
+          <p className="price">{product.price.toFixed(2)} $</p>
           <div className="buttons-row">
             <button
               className={`add-to-cart ${addedToCart ? "added" : ""}`}
               onClick={handleAddToCart}
-              disabled={addedToCart}
             >
               {addedToCart ? "Добавлено" : "Добавить в корзину"}
             </button>

@@ -3,7 +3,7 @@ async function loadOrders() {
   container.innerHTML = '';
 
   try {
-    const response = await fetch(`/api/orders`, {
+    const response = await fetch(`http://localhost:5200/api/orders`, {
       credentials: 'include' // JWT cookie
     });
 

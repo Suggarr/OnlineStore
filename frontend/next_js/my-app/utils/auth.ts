@@ -39,7 +39,6 @@ export async function loginUser(email: string, password: string) {
   }
 
   const user = await getCurrentUser();
-  triggerUserChanged(user);
 }
 
 // Выход
@@ -49,7 +48,6 @@ export async function logoutUser() {
     credentials: "include",
   });
   if (!res.ok) throw new Error("Ошибка выхода");
-  triggerUserChanged(null);
 }
 
 // Получение текущего пользователя
@@ -66,7 +64,7 @@ export async function getCurrentUser(): Promise<UserData | null> {
 }
 
 // Обновление профиля
-export async function updateUserProfile(data: { username: string; email: string }): Promise<UserData> {
+export async function updateUserProfile(data: { username: string; email: string }): Promise<UserData | null> {
   const res = await fetch(`${API_URL}/infome/name`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -76,12 +74,21 @@ export async function updateUserProfile(data: { username: string; email: string 
 
   if (!res.ok) throw new Error("Ошибка обновления профиля");
 
-  const updatedUser = await res.json();
-  triggerUserChanged(updatedUser);
-  return updatedUser;
+  // Если бек возвращает только статус код, получаем актуальные данные отдельно
+  const contentLength = res.headers.get("content-length");
+  if (contentLength === "0" || res.status === 204) {
+    // Пустой ответ - получаем актуальные данные
+    const updatedUser = await getCurrentUser();
+    return updatedUser;
+  }
+
+  try {
+    const updatedUser = await res.json();
+    return updatedUser;
+  } catch {
+    const updatedUser = await getCurrentUser();
+    return updatedUser;
+  }
 }
 
-// Генерация события при смене пользователя
-export function triggerUserChanged(user: UserData | null) {
-  window.dispatchEvent(new CustomEvent("userChanged", { detail: user }));
-}
+

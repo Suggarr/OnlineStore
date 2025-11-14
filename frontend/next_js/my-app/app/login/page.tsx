@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { getCurrentUser } from "@/utils/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -8,6 +10,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const { login } = useAuth();
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -25,6 +29,12 @@ export default function LoginPage() {
       if (!res.ok) {
         const text = await res.text();
         throw new Error(text || "Ошибка входа");
+      }
+
+      // Получаем данные пользователя после успешного входа
+      const user = await getCurrentUser();
+      if (user) {
+        login(user); // Обновляем контекст
       }
 
       setSuccess("✅ Успешный вход!");

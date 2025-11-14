@@ -1,98 +1,73 @@
+// components/Header.tsx
 "use client";
-import { useState, useEffect } from "react";
-import { ShoppingCart, User } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { getCurrentUser, logoutUser } from "@/utils/auth";
 
-// Тип данных пользователя
-export type UserData = {
-  id: string;
-  username: string;
-  email: string;
-  role: string;
-};
+import { useState } from "react";
+import { User, ShoppingCart } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [user, setUser] = useState<UserData | null>(null);
+  const { user, logout } = useAuth();
   const router = useRouter();
 
-  const navItems = [
-    { label: "Главная", href: "/" },
-    { label: "Каталог", href: "/catalog" },
-    { label: "Корзина", href: "/cart" },
-  ];
-
-  // Получаем текущего пользователя при загрузке
-  useEffect(() => {
-    async function fetchUser() {
-      try {
-        const currentUser = await getCurrentUser();
-        setUser(currentUser);
-      } catch (err) {
-        setUser(null);
-      }
-    }
-    fetchUser();
-
-    // Слушаем событие изменения пользователя
-    const handler = (e: CustomEvent) => setUser(e.detail);
-    window.addEventListener("userChanged", handler as EventListener);
-    return () =>
-      window.removeEventListener("userChanged", handler as EventListener);
-  }, []);
-
-  // Выход из аккаунта
   const handleLogout = async () => {
     try {
-      await logoutUser();
-      setUser(null);
-      router.push("/login");
+      await logout();
       setMenuOpen(false);
-
-      // Генерируем событие для других компонентов
-      window.dispatchEvent(
-        new CustomEvent("userChanged", { detail: null })
-      );
+      router.push("/login");
     } catch (err) {
       console.error("Ошибка выхода:", err);
     }
   };
 
-  const menuLinks = user
-    ? [...navItems, { label: `Профиль (${user.username})`, href: "/profile" }]
-    : navItems;
+  const navItems = [
+    { label: "Главная", href: "/" },
+    { label: "Каталог", href: "/catalog" },
+  ];
+
+  const menuLinks = [
+    ...navItems,
+    ...(user && (user.role === "Admin" || user.role === "SuperAdmin")
+      ? [{ label: "Админка", href: "/admin" }]
+      : []),
+    ...(user ? [{ label: `Профиль (${user.username})`, href: "/profile" }] : []),
+  ];
 
   return (
     <>
-      <header>
+      <header className="header">
         <div className="logo" onClick={() => router.push("/")}>
-          OnlineStore
+          🛒 OnlineStore
         </div>
 
         <nav className="menu">
           {menuLinks.map((item, idx) => (
-            <a key={item.href + idx} href={item.href}>
+            <a key={idx} href={item.href} className="nav-link">
               {item.label}
             </a>
           ))}
         </nav>
 
         <div className="actions">
-          <a href="/cart">
-            <ShoppingCart />
+          {/* Корзина - видна только на десктопе */}
+          <a href="/cart" className="cart-link">
+            <ShoppingCart size={20} />
           </a>
 
+          {/* Кнопка входа/выхода - видна только на десктопе */}
           {user ? (
             <button onClick={handleLogout} className="logout-btn">
               Выйти
             </button>
           ) : (
-            <a href="/login">
-              <User />
+            <a href="/login" className="login-link">
+              <User size={20} />
+              Войти
             </a>
           )}
 
+          {/* Бургер-меню - видно только на мобильных */}
           <button
             className={`menu-burger ${menuOpen ? "active" : ""}`}
             onClick={() => setMenuOpen(!menuOpen)}
@@ -102,32 +77,43 @@ export default function Header() {
           </button>
         </div>
 
+        {/* Мобильное меню */}
         <div className={`header-menu ${menuOpen ? "active" : ""}`}>
           <nav>
             {menuLinks.map((item, idx) => (
               <a
-                key={"mobile_" + item.href + idx}
+                key={"mobile_" + idx}
                 href={item.href}
                 onClick={() => setMenuOpen(false)}
               >
                 {item.label}
               </a>
             ))}
-            {user && (
-              <button
-                onClick={handleLogout}
-                style={{
-                  marginTop: "20px",
-                  background: "#ef4444",
-                  color: "#fff",
-                  padding: "8px 12px",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                }}
-              >
+            
+            {/* КОРЗИНА в мобильном меню */}
+            <a
+              href="/cart"
+              className="mobile-cart"
+              onClick={() => setMenuOpen(false)}
+            >
+              <ShoppingCart size={18} />
+              Корзина
+            </a>
+
+            {/* КНОПКА ВХОДА/ВЫХОДА в мобильном меню */}
+            {user ? (
+              <button onClick={handleLogout} className="mobile-logout">
                 Выйти
               </button>
+            ) : (
+              <a 
+                href="/login" 
+                className="mobile-login"
+                onClick={() => setMenuOpen(false)}
+              >
+                <User size={18} />
+                Войти
+              </a>
             )}
           </nav>
         </div>
@@ -139,7 +125,7 @@ export default function Header() {
       </header>
 
       <style jsx>{`
-        header {
+        .header {
           position: fixed;
           top: 0;
           left: 0;
@@ -151,44 +137,76 @@ export default function Header() {
           justify-content: space-between;
           padding: 0 30px;
           z-index: 1000;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
         }
 
         .logo {
           font-weight: 700;
-          font-size: 1.6rem;
+          font-size: 1.4rem;
           color: royalblue;
           cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 6px;
         }
 
         .menu {
           display: flex;
-          gap: 25px;
+          gap: 20px;
         }
 
-        .menu a {
+        .nav-link {
           text-decoration: none;
           color: #333;
+          font-weight: 500;
           transition: 0.2s;
         }
 
-        .menu a:hover {
+        .nav-link:hover {
           color: royalblue;
         }
 
         .actions {
           display: flex;
           align-items: center;
-          gap: 15px;
+          gap: 12px;
+        }
+
+        /* Стили для десктопной версии */
+        .cart-link {
+          display: flex;
+          align-items: center;
+          text-decoration: none;
+          color: #333;
+          transition: 0.2s;
+        }
+
+        .cart-link:hover {
+          color: royalblue;
+        }
+
+        .login-link {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          text-decoration: none;
+          color: #333;
+          font-weight: 500;
+          transition: 0.2s;
+        }
+
+        .login-link:hover {
+          color: royalblue;
         }
 
         .logout-btn {
           background: #ef4444;
           border: none;
           color: white;
-          padding: 6px 12px;
+          padding: 7px 14px;
           border-radius: 8px;
           cursor: pointer;
+          font-weight: 500;
           transition: 0.2s;
         }
 
@@ -196,6 +214,7 @@ export default function Header() {
           background: #dc2626;
         }
 
+        /* Бургер меню */
         .menu-burger {
           display: none;
           background-color: transparent;
@@ -258,6 +277,13 @@ export default function Header() {
         }
 
         @media (max-width: 768px) {
+          /* Скрываем десктопные элементы на мобильных */
+          .cart-link,
+          .login-link,
+          .logout-btn {
+            display: none;
+          }
+
           .menu {
             display: none;
           }
@@ -289,7 +315,9 @@ export default function Header() {
           }
 
           .header-menu nav a {
-            display: block;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             padding: 12px 10px;
             margin: 8px 0;
             font-size: 18px;
@@ -300,6 +328,49 @@ export default function Header() {
           }
 
           .header-menu nav a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+          }
+
+          /* Стили для мобильной корзины */
+          .mobile-cart {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+
+          /* Стили для мобильной авторизации */
+          .mobile-logout {
+            background: #ef4444;
+            border: none;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            margin-top: 10px;
+            transition: 0.2s;
+          }
+
+          .mobile-logout:hover {
+            background: #dc2626;
+          }
+
+          .mobile-login {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: background 0.3s;
+            margin-top: 10px;
+          }
+
+          .mobile-login:hover {
             background-color: rgba(255, 255, 255, 0.2);
           }
 
@@ -326,240 +397,3 @@ export default function Header() {
     </>
   );
 }
-
-// "use client";
-// import { useState } from "react";
-
-// export default function Header() {
-//   const [menuOpen, setMenuOpen] = useState(false);
-//   const [user, setUser] = useState<string | null>(null); // null — не вошёл
-//   const [showLogin, setShowLogin] = useState(false);
-//   const [showRegister, setShowRegister] = useState(false);
-
-//   return (
-//     <>
-//       <header>
-//         <h1>OnlineStore</h1>
-
-//         <nav className="header-nav">
-//           <a href="/">Главная</a>
-//           <a href="#">Корзина</a>
-//           <a href="#">История заказов</a>
-//           <a href="/profile">Профиль</a>
-
-//           {!user ? (
-//             <div className="auth-buttons">
-//               <button onClick={() => setShowLogin(true)}>Войти</button>
-//               <button onClick={() => setShowRegister(true)}>Регистрация</button>
-//             </div>
-//           ) : (
-//             <div className="user-info">
-//               <img src="https://i.pravatar.cc/40" alt="user" />
-//               <span>{user}</span>
-//               <button
-//                 className="logout-btn"
-//                 onClick={() => setUser(null)}
-//               >
-//                 Выйти
-//               </button>
-//             </div>
-//           )}
-//         </nav>
-
-//         {/* Бургер для мобильных */}
-//         <button
-//           className={`menu-burger ${menuOpen ? "active" : ""}`}
-//           onClick={() => setMenuOpen(!menuOpen)}
-//         >
-//           <span></span>
-//         </button>
-//       </header>
-
-//       {/* Всплывающее окно входа */}
-//       {showLogin && (
-//         <div className="modal-overlay" onClick={() => setShowLogin(false)}>
-//           <div className="modal" onClick={(e) => e.stopPropagation()}>
-//             <h2>Вход</h2>
-//             <input type="email" placeholder="Email" />
-//             <input type="password" placeholder="Пароль" />
-//             <button
-//               onClick={() => {
-//                 setUser("Иван Иванов");
-//                 setShowLogin(false);
-//               }}
-//               className="save-btn"
-//             >
-//               Войти
-//             </button>
-//             <p className="modal-switch">
-//               Нет аккаунта?{" "}
-//               <span onClick={() => { setShowLogin(false); setShowRegister(true); }}>
-//                 Зарегистрируйтесь
-//               </span>
-//             </p>
-//           </div>
-//         </div>
-//       )}
-
-//       {/* Всплывающее окно регистрации */}
-//       {showRegister && (
-//         <div className="modal-overlay" onClick={() => setShowRegister(false)}>
-//           <div className="modal" onClick={(e) => e.stopPropagation()}>
-//             <h2>Регистрация</h2>
-//             <input type="text" placeholder="Имя" />
-//             <input type="email" placeholder="Email" />
-//             <input type="password" placeholder="Пароль" />
-//             <button
-//               onClick={() => {
-//                 setUser("Иван Иванов");
-//                 setShowRegister(false);
-//               }}
-//               className="save-btn"
-//             >
-//               Создать аккаунт
-//             </button>
-//             <p className="modal-switch">
-//               Уже есть аккаунт?{" "}
-//               <span onClick={() => { setShowRegister(false); setShowLogin(true); }}>
-//                 Войти
-//               </span>
-//             </p>
-//           </div>
-//         </div>
-//       )}
-
-//       <style jsx>{`
-//         header {
-//           background: white;
-//           padding: 15px 25px;
-//           box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-//           display: flex;
-//           justify-content: space-between;
-//           align-items: center;
-//           position: sticky;
-//           top: 0;
-//           z-index: 100;
-//         }
-
-//         h1 {
-//           color: royalblue;
-//           font-size: 22px;
-//           margin: 0;
-//         }
-
-//         .header-nav {
-//           display: flex;
-//           align-items: center;
-//           gap: 20px;
-//         }
-
-//         .header-nav a {
-//           color: #333;
-//           text-decoration: none;
-//           font-size: 16px;
-//           transition: color 0.2s;
-//         }
-
-//         .header-nav a:hover {
-//           color: royalblue;
-//         }
-
-//         .auth-buttons button {
-//           background: royalblue;
-//           border: none;
-//           color: white;
-//           padding: 8px 14px;
-//           border-radius: 8px;
-//           margin-left: 8px;
-//           cursor: pointer;
-//           transition: background 0.3s;
-//         }
-
-//         .auth-buttons button:hover {
-//           background: #1d4ed8;
-//         }
-
-//         .user-info {
-//           display: flex;
-//           align-items: center;
-//           gap: 10px;
-//         }
-
-//         .user-info img {
-//           border-radius: 50%;
-//         }
-
-//         .logout-btn {
-//           background: #ef4444;
-//           border: none;
-//           color: white;
-//           padding: 6px 10px;
-//           border-radius: 8px;
-//           cursor: pointer;
-//           font-size: 13px;
-//         }
-
-//         /* --- модалки --- */
-//         .modal-overlay {
-//           position: fixed;
-//           top: 0;
-//           left: 0;
-//           width: 100%;
-//           height: 100%;
-//           background: rgba(0, 0, 0, 0.4);
-//           display: flex;
-//           align-items: center;
-//           justify-content: center;
-//           z-index: 1000;
-//         }
-
-//         .modal {
-//           background: white;
-//           padding: 30px;
-//           border-radius: 16px;
-//           width: 360px;
-//           animation: fadeIn 0.3s ease;
-//           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-//           text-align: center;
-//         }
-
-//         .modal input {
-//           width: 90%;
-//           padding: 10px;
-//           margin: 10px 0;
-//           border: 1px solid #ccc;
-//           border-radius: 10px;
-//           outline: none;
-//         }
-
-//         .save-btn {
-//           background: royalblue;
-//           color: white;
-//           border: none;
-//           padding: 10px 20px;
-//           border-radius: 10px;
-//           cursor: pointer;
-//           transition: 0.3s;
-//           width: 100%;
-//           margin-top: 10px;
-//         }
-
-//         .modal-switch span {
-//           color: royalblue;
-//           cursor: pointer;
-//         }
-
-//         @keyframes fadeIn {
-//           from {
-//             opacity: 0;
-//             transform: translateY(-10px);
-//           }
-//           to {
-//             opacity: 1;
-//             transform: translateY(0);
-//           }
-//         }
-//       `}</style>
-//     </>
-//   );
-// }

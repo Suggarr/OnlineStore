@@ -1,8 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getCurrentUser, logoutUser, updateUserProfile } from "@/utils/auth";
+import { updateUserProfile } from "@/utils/auth";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNotify } from "@/hooks/useNotify";
 
+// Ваши типы остаются такими же...
 type UserData = {
   id: string;
   username: string;
@@ -35,9 +38,13 @@ type FavoriteData = {
 };
 
 export default function ProfilePage() {
+  const notify = useNotify();
   const router = useRouter();
+  const { user, logout, login } = useAuth(); // Добавляем login из контекста
 
-  const [user, setUser] = useState<UserData | null>(null);
+  // Удаляем локальное состояние пользователя
+  // const [user, setUser] = useState<UserData | null>(null);
+
   const [activeTab, setActiveTab] = useState("orders");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -72,11 +79,10 @@ export default function ProfilePage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const currentUser = await getCurrentUser();
-        if (currentUser) {
-          setUser(currentUser);
-          setEditUsername(currentUser.username);
-          setEditEmail(currentUser.email);
+        // Пользователь уже загружен через контекст, загружаем только дополнительные данные
+        if (user) {
+          setEditUsername(user.username);
+          setEditEmail(user.email);
 
           // Получаем реальные заказы
           const ordersRes = await fetch("http://localhost:5200/api/Orders", { credentials: "include" });
@@ -90,15 +96,13 @@ export default function ProfilePage() {
         }
       } catch (err) {
         console.error(err);
-        setUser(null);
       }
     }
     fetchData();
-  }, []);
+  }, [user]); // Зависимость от user
 
   const handleLogout = async () => {
-    await logoutUser();
-    setUser(null);
+    await logout();
     router.push("/login");
   };
 
@@ -106,10 +110,13 @@ export default function ProfilePage() {
     if (!user) return;
     try {
       const updatedUser = await updateUserProfile({ username: editUsername, email: editEmail });
-      setUser(updatedUser);
+      if (updatedUser) {
+        login(updatedUser); // Обновляем контекст вместо локального состояния
+      }
       setIsEditModalOpen(false);
-      alert("Профиль обновлен!");
+      notify.success("Профиль успешно обновлён");
     } catch (err) {
+      console.error(err);
       alert("Ошибка обновления профиля.");
     }
   };
@@ -126,7 +133,7 @@ export default function ProfilePage() {
     });
 
     if (res.ok) {
-      alert("Пароль изменён! Войдите снова.");
+      notify.success("Пароль успешно изменён");
       handleLogout();
     } else if (res.status === 409) {
       alert("Старый пароль введён неверно.");
@@ -169,7 +176,7 @@ export default function ProfilePage() {
                       <img src={item.imageUrl || ""} alt={item.productName} />
                       <div>
                         <p>{item.productName}</p>
-                        <p>{item.quantity} × {item.price.toFixed(2)} ₽</p>
+                        <p>{item.quantity} × {item.price.toFixed(2)} $</p>
                       </div>
                     </div>
                   ))}
