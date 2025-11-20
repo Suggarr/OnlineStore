@@ -1,241 +1,290 @@
-"use client";
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuthRedirect } from "@/hooks/useAuthRedirect";
-import "./cart.css";
+'use client';
 
-type CartItem = {
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ShoppingCart, Package, ArrowRight, Trash2 } from 'lucide-react';
+import { useLocale } from '@/contexts/LocaleContext';
+import { toast } from 'react-toastify';
+import { apiClient } from '@/lib/apiClient';
+import { useAuthRedirect } from '@/hooks/useAuthRedirect';
+import styles from './cart.module.css';
+
+interface CartItem {
   id: string;
   productId: string;
   productName: string;
   price: number;
   quantity: number;
-  imageUrl: string;
-};
+  imageUrl?: string;
+}
 
 export default function CartPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { isAuthorized } = useAuthRedirect('http://localhost:5200/api/cartitems');
 
-  const { isAuthorized } = useAuthRedirect("http://localhost:5200/api/cartitems");
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  async function fetchCart() {
-    setLoading(true);
-    setError("");
+  const { t } = useLocale();
 
+  useEffect(() => {
+    if (mounted && isAuthorized) {
+      fetchCart();
+    }
+  }, [isAuthorized, mounted]);
+
+  const fetchCart = async () => {
     try {
-      const res = await fetch("http://localhost:5200/api/cartitems", {
-        credentials: "include",
-      });
-
-      if (!res.ok) throw new Error("Ошибка при загрузке корзины");
-      const cartData: CartItem[] = await res.json();
-      setCartItems(cartData);
-    } catch (err) {
-      console.error(err);
-      setError("Не удалось загрузить товары.");
+      setLoading(true);
+      const response = await apiClient.get<CartItem[]>('/CartItems');
+      setCartItems(response.data || []);
+      calculateTotal(response.data || []);
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+      toast.error(t('cart.errorLoad', 'Ошибка при загрузке корзины'));
     } finally {
       setLoading(false);
     }
-  }
+  };
 
-  useEffect(() => {
-    if (isAuthorized) {
-      fetchCart();
-    }
-  }, [isAuthorized]);
+  const calculateTotal = (items: CartItem[]) => {
+    const sum = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    setTotal(sum);
+  };
 
-  const totalPrice = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  const updateQuantity = async (id: string, newQuantity: number) => {
+    if (newQuantity <= 0) return;
 
-  const updateQuantity = async (id: string, newQty: number) => {
-    if (newQty < 1) {
-      alert("Количество не может быть меньше 1.");
-      return;
-    }
     try {
-      const res = await fetch(
-        `http://localhost:5200/api/cartitems/${id}/quantity`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ quantity: newQty }),
-        }
+      await apiClient.patch(`/CartItems/${id}/quantity`, { quantity: newQuantity });
+      const updated = cartItems.map(item =>
+        item.id === id ? { ...item, quantity: newQuantity } : item
       );
-      if (!res.ok) throw new Error("Ошибка при обновлении количества");
-      setCartItems((prev) =>
-        prev.map((item) =>
-          item.id === id ? { ...item, quantity: newQty } : item
-        )
-      );
-    } catch (err) {
-      console.error(err);
-      alert("Не удалось обновить количество товара.");
+      setCartItems(updated);
+      calculateTotal(updated);
+      toast.success(t('cart.qtyUpdated', 'Количество обновлено'));
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      toast.error(t('cart.errorUpdateQty', 'Ошибка при обновлении количества'));
+    }
+  };
+
+  const deleteItem = async (id: string) => {
+    try {
+      await apiClient.del(`/CartItems/${id}`);
+      const updated = cartItems.filter(item => item.id !== id);
+      setCartItems(updated);
+      calculateTotal(updated);
+      toast.success(t('cart.itemRemoved', 'Товар удален из корзины'));
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      toast.error(t('cart.errorDelete', 'Ошибка при удалении товара'));
     }
   };
 
   const clearCart = async () => {
-    if (!confirm("Вы уверены, что хотите очистить корзину?")) return;
+    if (!confirm(t('cart.clearConfirm', 'Вы уверены, что хотите очистить корзину?'))) return;
+
     try {
-      const res = await fetch(`http://localhost:5200/api/cartitems/clear`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Ошибка при очистке корзины");
+      await apiClient.del('/CartItems/clear');
       setCartItems([]);
-    } catch (err) {
-      console.error(err);
-      alert("Не удалось очистить корзину.");
-    }
-  };
-  // 🔹 Удалить один товар из корзины
-  const handleDelete = async (id: string) => {
-    if (!confirm("Удалить этот товар из корзины?")) return;
-
-    try {
-      const res = await fetch(`http://localhost:5200/api/cartitems/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-
-      if (!res.ok) throw new Error("Ошибка при удалении товара");
-
-      // Удаляем товар из состояния без повторного запроса
-      setCartItems((prev) => prev.filter((item) => item.id !== id));
-
-      alert("Товар удалён из корзины.");
-    } catch (err) {
-      console.error(err);
-      alert("Не удалось удалить товар из корзины.");
+      setTotal(0);
+      toast.success(t('cart.cleared', 'Корзина очищена'));
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+      toast.error(t('cart.errorClear', 'Ошибка при очистке корзины'));
     }
   };
 
-  const handleCheckout = async () => {
+  const checkout = async () => {
     if (cartItems.length === 0) {
-      alert("Корзина пуста, добавить товары для оформления заказа!");
+      toast.error(t('cart.emptyError', 'Корзина пуста'));
       return;
     }
 
     try {
-      // Создаем заказ на сервере
-      const res = await fetch(`http://localhost:5200/api/orders`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          items: cartItems.map((i) => ({
-            productId: i.productId,
-            quantity: i.quantity,
-          })),
-        }),
+      setCheckoutLoading(true);
+      await apiClient.post('/Orders', {
+        items: cartItems.map(i => ({
+          productId: i.productId,
+          quantity: i.quantity,
+        })),
       });
-
-      if (!res.ok) throw new Error("Ошибка при оформлении заказа");
-
-      // Очистка корзины после успешного оформления
+      toast.success(t('cart.checkoutSuccess', 'Заказ успешно оформлен!'));
       setCartItems([]);
-
-      alert("Заказ успешно оформлен!");
-      router.push("/"); // редирект на главную или страницу "Спасибо за заказ"
-    } catch (err) {
-      console.error(err);
-      alert("Не удалось оформить заказ.");
+      setTotal(0);
+      setTimeout(() => router.push('/profile'), 1500);
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast.error(t('cart.checkoutFail', 'Ошибка при оформлении заказа'));
+    } finally {
+      setCheckoutLoading(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h1>{t('cart.title', 'Корзина покупок')}</h1>
+        </div>
+        <div className={styles.loading}>
+          <ShoppingCart size={48} />
+          <p>{t('cart.loading', 'Загрузка корзины...')}</p>
+        </div>
+      </div>
+    );
+  }
 
-  // 🔹 Переход на страницу товара
-  const handleProductClick = (productId: string) => {
-    router.push(`/products/${productId}`);
-  };
+  if (!mounted) {
+    return null;
+  }
+
+  if (cartItems.length === 0) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h1>{t('cart.title', 'Корзина покупок')}</h1>
+          <p>{t('cart.emptyTitle', 'Ваша корзина пуста')}</p>
+        </div>
+        <div className={styles.emptyState}>
+          <div className={styles.emptyIcon}>
+            <Package size={64} />
+          </div>
+          <h3>{t('cart.emptyHeader', 'Корзина пуста')}</h3>
+          <p>{t('cart.emptyText', 'Добавьте товары из каталога, чтобы начать покупки')}</p>
+          <Link href="/catalog" className={styles.emptyButton}>
+            {t('cart.goToCatalog', 'Перейти в каталог')}
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="cart-page">
-      <h1 className="cart-title">🛒 Корзина</h1>
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h1>{t('cart.title', 'Корзина покупок')}</h1>
+        <p>
+          {cartItems.length} {t('cart.itemsLabel', 'товар')}{cartItems.length % 10 === 1 && cartItems.length !== 11 ? '' : t('cart.itemsPl', 'ов')}
+        </p>
+      </div>
 
-      {loading ? (
-        <p className="cart-loading">Загрузка...</p>
-      ) : error ? (
-        <p className="cart-error">{error}</p>
-      ) : cartItems.length === 0 ? (
-        <p className="cart-empty">У вас пока нет товаров в корзине.</p>
-      ) : (
-        <>
-          <div className="cart-list">
-            {cartItems.map((prod) => (
-              <div
-                key={prod.id}
-                className={`cart-item ${hoveredId === prod.id ? "hovered" : ""
-                  }`}
-                onMouseEnter={() => setHoveredId(prod.id)}
-                onMouseLeave={() => setHoveredId(null)}
-              >
-                {/* Фото кликабельно */}
+      <div className={styles.mainGrid}>
+        <div className={styles.itemsSection}>
+          {cartItems.map(item => (
+            <div key={item.id} className={styles.cartItem}>
+              <div className={styles.imageWrapper}>
                 <img
-                  src={prod.imageUrl}
-                  alt={prod.productName}
-                  className="cart-image clickable"
-                  onClick={() => handleProductClick(prod.productId)}
+                  src={item.imageUrl || `https://via.placeholder.com/120?text=${item.productName}`}
+                  alt={item.productName}
+                  className={styles.image}
+                  onClick={() => router.push(`/products/${item.productId}`)}
                 />
+              </div>
 
-                <div className="cart-info">
-                  <p
-                    className="cart-name clickable"
-                    onClick={() => handleProductClick(prod.productId)}
-                  >
-                    {prod.productName}
-                  </p>
+              <div className={styles.itemContent}>
+                <Link
+                  href={`/products/${item.productId}`}
+                  className={styles.itemName}
+                >
+                  {item.productName}
+                </Link>
 
-                  <p className="cart-price">{prod.price.toFixed(2)} $</p>
+                <div className={styles.priceSection}>
+                  <div className={styles.price}>
+                    ${(item.price * item.quantity).toFixed(2)}
+                  </div>
 
-                  <div className="quantity-control">
+                  <div className={styles.quantityControl}>
                     <button
-                      className="qty-btn"
-                      onClick={() =>
-                        updateQuantity(prod.id, Math.max(prod.quantity - 1, 1))
-                      }
-                      disabled={prod.quantity <= 1} // минимальное значение 1
+                      className={styles.quantityBtn}
+                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                      disabled={item.quantity <= 1}
+                      aria-label="Уменьшить количество"
                     >
-                      -
+                      −
                     </button>
-
-                    <span className="qty-display">{prod.quantity}</span>
-
+                    <div className={styles.quantityDisplay}>
+                      {item.quantity}
+                    </div>
                     <button
-                      className="qty-btn"
-                      onClick={() => updateQuantity(prod.id, prod.quantity + 1)}
+                      className={styles.quantityBtn}
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      aria-label="Увеличить количество"
                     >
                       +
                     </button>
-                    <button className="delete-btn" onClick={() => handleDelete(prod.id)}>
-                      Удалить товар
-                    </button>
                   </div>
+
+                  <button
+                    className={styles.deleteBtn}
+                    onClick={() => deleteItem(item.id)}
+                    title="Удалить товар"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
-
-          <div className="cart-footer">
-            <p className="cart-total">Итого: {totalPrice.toFixed(2)} $</p>
-
-            <div className="cart-actions">
-              <button className="checkout-btn" onClick={handleCheckout}>
-                Оформить заказ
-              </button>
-              <button className="clear-btn" onClick={clearCart}>
-                Очистить корзину
-              </button>
             </div>
+          ))}
+        </div>
+
+        <div className={styles.summary}>
+          <h2 className={styles.summaryTitle}>{t('cart.summaryTitle', 'Итого')}</h2>
+
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>{t('cart.summary.items', 'Товаров:')}</span>
+            <span className={styles.summaryValue}>{cartItems.length}</span>
           </div>
-        </>
-      )}
+
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>{t('cart.summary.total', 'Сумма:')}</span>
+            <span className={styles.summaryValue}>
+              ${total.toFixed(2)}
+            </span>
+          </div>
+
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>{t('cart.summary.shipping', 'Доставка:')}</span>
+            <span className={styles.summaryValue}>{t('cart.summary.free', 'Бесплатно')}</span>
+          </div>
+
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>{t('cart.summary.totalText', 'Итого:')}</span>
+            <span className={styles.summaryValue}>
+              ${total.toFixed(2)}
+            </span>
+          </div>
+
+          <button
+            className={styles.checkoutBtn}
+            onClick={checkout}
+            disabled={checkoutLoading || cartItems.length === 0}
+          >
+            {checkoutLoading ? t('cart.checkoutLoading', 'Оформление...') : t('cart.checkout', 'Оформить заказ')}
+            {!checkoutLoading && <ArrowRight size={18} style={{ marginLeft: '0.5rem' }} />}
+          </button>
+
+          <Link href="/catalog" className={styles.continueShoppingBtn}>
+            {t('cart.continueShopping', 'Продолжить покупки')}
+          </Link>
+
+          <button
+            className={styles.clearBtn}
+            onClick={clearCart}
+          >
+            {t('cart.clearBtn', 'Очистить корзину')}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

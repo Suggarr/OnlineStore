@@ -5,11 +5,13 @@ import { useState } from "react";
 import { User, ShoppingCart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLocale } from "@/contexts/LocaleContext";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const router = useRouter();
+  const { locale, setLocale, t } = useLocale();
 
   const handleLogout = async () => {
     try {
@@ -22,16 +24,18 @@ export default function Header() {
   };
 
   const navItems = [
-    { label: "Главная", href: "/" },
-    { label: "Каталог", href: "/catalog" },
+    { label: t("header.nav.home", "Главная"), href: "/" },
+    { label: t("header.nav.catalog", "Каталог"), href: "/catalog" },
   ];
 
   const menuLinks = [
     ...navItems,
     ...(user && (user.role === "Admin" || user.role === "SuperAdmin")
-      ? [{ label: "Админка", href: "/admin" }]
+      ? [{ label: t("header.nav.admin", "Админка"), href: "/admin" }]
       : []),
-    ...(user ? [{ label: `Профиль (${user.username})`, href: "/profile" }] : []),
+    ...(user
+      ? [{ label: `${t("header.profile", "Профиль")} (${user.username})`, href: "/profile" }]
+      : []),
   ];
 
   return (
@@ -55,15 +59,27 @@ export default function Header() {
             <ShoppingCart size={20} />
           </a>
 
+          {/* Переключатель языка */}
+          <select
+            value={locale}
+            onChange={(e) => setLocale(e.target.value)}
+            className="lang-select"
+            aria-label={t("header.langSelectAria", "Select language")}
+            style={{ padding: "6px 8px", borderRadius: 6, border: "1px solid #e5e7eb" }}
+          >
+            <option value="ru">RU</option>
+            <option value="en">EN</option>
+          </select>
+
           {/* Кнопка входа/выхода - видна только на десктопе */}
           {user ? (
             <button onClick={handleLogout} className="logout-btn">
-              Выйти
+              {t("header.logout", "Выйти")}
             </button>
           ) : (
             <a href="/login" className="login-link">
               <User size={20} />
-              Войти
+              {t("header.login", "Войти")}
             </a>
           )}
 
@@ -97,13 +113,13 @@ export default function Header() {
               onClick={() => setMenuOpen(false)}
             >
               <ShoppingCart size={18} />
-              Корзина
+              {t("header.cart", "Корзина")}
             </a>
 
             {/* КНОПКА ВХОДА/ВЫХОДА в мобильном меню */}
             {user ? (
               <button onClick={handleLogout} className="mobile-logout">
-                Выйти
+                {t("header.logout", "Выйти")}
               </button>
             ) : (
               <a 
@@ -112,7 +128,7 @@ export default function Header() {
                 onClick={() => setMenuOpen(false)}
               >
                 <User size={18} />
-                Войти
+                {t("header.login", "Войти")}
               </a>
             )}
           </nav>

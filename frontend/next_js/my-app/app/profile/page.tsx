@@ -1,18 +1,15 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { updateUserProfile } from "@/utils/auth";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNotify } from "@/hooks/useNotify";
-
-// Ваши типы остаются такими же...
-type UserData = {
-  id: string;
-  username: string;
-  email: string;
-  role: string;
-  createdAt: string;
-};
+import apiClient from "@/lib/apiClient";
+import { User, Mail, Package, Heart, Settings, LogOut, Edit2, Lock, X } from "lucide-react";
+import Link from "next/link";
+import styles from "./profile.module.css";
+import { toast } from "react-toastify";
+import { useLocale } from "@/contexts/LocaleContext";
 
 type OrderItem = {
   productName: string;
@@ -38,12 +35,9 @@ type FavoriteData = {
 };
 
 export default function ProfilePage() {
-  const notify = useNotify();
   const router = useRouter();
-  const { user, logout, login } = useAuth(); // Добавляем login из контекста
-
-  // Удаляем локальное состояние пользователя
-  // const [user, setUser] = useState<UserData | null>(null);
+  const { user, logout, login } = useAuth();
+  const { t } = useLocale();
 
   const [activeTab, setActiveTab] = useState("orders");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -58,12 +52,7 @@ export default function ProfilePage() {
 
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [favorites, setFavorites] = useState<FavoriteData[]>([]);
-
-  // Сокращение текста
-  const truncateText = (text: string, maxLength: number) => {
-    if (!text) return "";
-    return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
-  };
+  const [loading, setLoading] = useState(true);
 
   const formatDateTime = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -79,27 +68,24 @@ export default function ProfilePage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        // Пользователь уже загружен через контекст, загружаем только дополнительные данные
         if (user) {
           setEditUsername(user.username);
           setEditEmail(user.email);
 
-          // Получаем реальные заказы
-          const ordersRes = await fetch("http://localhost:5200/api/Orders", { credentials: "include" });
-          const ordersData = await ordersRes.json();
-          setOrders(ordersData);
+          const ordersRes = await apiClient.get<OrderData[]>("/Orders");
+          setOrders((ordersRes.data as OrderData[]) || []);
 
-          // Получаем избранное
-          const favRes = await fetch("http://localhost:5200/api/Favorites", { credentials: "include" });
-          const favData = await favRes.json();
-          setFavorites(favData);
+          const favRes = await apiClient.get<FavoriteData[]>("/Favorites");
+          setFavorites((favRes.data as FavoriteData[]) || []);
         }
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoading(false);
       }
     }
     fetchData();
-  }, [user]); // Зависимость от user
+  }, [user]);
 
   const handleLogout = async () => {
     await logout();
@@ -111,293 +97,312 @@ export default function ProfilePage() {
     try {
       const updatedUser = await updateUserProfile({ username: editUsername, email: editEmail });
       if (updatedUser) {
-        login(updatedUser); // Обновляем контекст вместо локального состояния
+        login(updatedUser);
       }
       setIsEditModalOpen(false);
-      notify.success("Профиль успешно обновлён");
+      toast.success(t("profile.messages.profileUpdated", "Профиль успешно обновлён"));
     } catch (err) {
       console.error(err);
-      alert("Ошибка обновления профиля.");
+      toast.error(t("profile.messages.updateError", "Ошибка обновления профиля"));
     }
   };
 
   const handlePasswordChange = async () => {
-    if (!oldPassword || !newPassword || !confirmPassword) return alert("Заполните все поля");
-    if (newPassword !== confirmPassword) return alert("Пароли не совпадают");
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      toast.error(t("profile.messages.fillAllFields", "Заполните все поля"));
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error(t("profile.messages.passwordsMismatch", "Пароли не совпадают"));
+      return;
+    }
 
-    const res = await fetch("http://localhost:5200/api/users/infome/password", {
-      method: "PATCH",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ oldPassword, newPassword }),
-    });
-
-    if (res.ok) {
-      notify.success("Пароль успешно изменён");
-      handleLogout();
-    } else if (res.status === 409) {
-      alert("Старый пароль введён неверно.");
-    } else {
-      alert("Ошибка при смене пароля.");
+    try {
+      await apiClient.patch("/users/infome/password", { oldPassword, newPassword });
+      toast.success(t("profile.messages.passwordChanged", "Пароль успешно изменён"));
+      setIsPasswordModalOpen(false);
+      setTimeout(() => handleLogout(), 1000);
+    } catch (err) {
+      console.error(err);
+      toast.error(t("profile.messages.passwordError", "Ошибка при смене пароля"));
     }
   };
 
+  if (!user) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.notAuthorized}>
+          <h2>{t("profile.notAuthorized.title", "Вы не авторизованы")}</h2>
+          <p>{t("profile.notAuthorized.text", "Пожалуйста, войдите в аккаунт")}</p>
+          <Link href="/login" className={styles.loginLink}>
+            {t("profile.notAuthorized.linkText", "Перейти на вход")}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="profile-page">
-      <div className="profile-header">
-        <div className="profile-avatar">
-          <img src="https://i.pravatar.cc/120" alt="avatar" />
-        </div>
-        <div className="profile-info">
-          <h2>{user?.username || "Гость"}</h2>
-          <p>{user?.email || "Не вошли в аккаунт"}</p>
-          {user && (
-            <button className="edit-btn" onClick={() => setIsEditModalOpen(true)}>Редактировать</button>
-          )}
+    <div className={styles.container}>
+      {/* Header */}
+      <div className={styles.header}>
+        <div className={styles.headerContent}>
+          <div className={styles.avatar}>
+            <User size={40} />
+          </div>
+          <div className={styles.userInfo}>
+            <h1>{user.username}</h1>
+            <p>{user.email}</p>
+            <button className={styles.editProfileBtn} onClick={() => setIsEditModalOpen(true)}>
+              <Edit2 size={18} />
+              {t("profile.header.editBtn", "Отредактировать")}
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="tabs">
-        <button className={activeTab === "orders" ? "active" : ""} onClick={() => setActiveTab("orders")}>Мои заказы</button>
-        <button className={activeTab === "favorites" ? "active" : ""} onClick={() => setActiveTab("favorites")}>Избранное</button>
-        <button className={activeTab === "settings" ? "active" : ""} onClick={() => setActiveTab("settings")}>Настройки</button>
+      {/* Tabs */}
+      <div className={styles.tabs}>
+        <button
+          className={`${styles.tab} ${activeTab === "orders" ? styles.active : ""}`}
+          onClick={() => setActiveTab("orders")}
+        >
+          <Package size={20} />
+          <span>{t("profile.tabs.orders", "Мои заказы")}</span>
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === "favorites" ? styles.active : ""}`}
+          onClick={() => setActiveTab("favorites")}
+        >
+          <Heart size={20} />
+          <span>{t("profile.tabs.favorites", "Избранное")}</span>
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === "settings" ? styles.active : ""}`}
+          onClick={() => setActiveTab("settings")}
+        >
+          <Settings size={20} />
+          <span>{t("profile.tabs.settings", "Настройки")}</span>
+        </button>
       </div>
 
-      <div className="tab-content">
-        {/* Заказы */}
+      {/* Content */}
+      <div className={styles.content}>
+        {/* Orders */}
         {activeTab === "orders" && (
-          <div className="orders-list">
-            {orders.length === 0 ? <p>У вас пока нет заказов</p> :
-              orders.map(order => (
-                <div key={order.id} className="order-card">
-                  <p><strong>Заказ №{order.id}</strong> - {formatDateTime(order.createdAt)}</p>
-                  {order.items.map((item, idx) => (
-                    <div key={idx} className="order-item">
-                      <img src={item.imageUrl || ""} alt={item.productName} />
-                      <div>
-                        <p>{item.productName}</p>
-                        <p>{item.quantity} × {item.price.toFixed(2)} $</p>
-                      </div>
+          <div className={styles.section}>
+            {loading ? (
+              <div className={styles.loading}>{t("profile.orders.loading", "Гружка...")}</div>
+            ) : orders.length === 0 ? (
+              <div className={styles.empty}>
+                <Package size={48} />
+                <h3>{t("profile.orders.emptyTitle", "Нет заказов")}</h3>
+                <p>{t("profile.orders.emptyText", "Вы еще не сделали ни одного заказа")}</p>
+                <Link href="/catalog" className={styles.actionBtn}>
+                  {t("profile.orders.catalogLink", "Перейти в каталог")}
+                </Link>
+              </div>
+            ) : (
+              <div className={styles.ordersList}>
+                {orders.map((order) => (
+                  <div key={order.id} className={styles.orderCard}>
+                    <div className={styles.orderHeader}>
+                      <span className={styles.orderId}>{t("profile.orders.orderLabel", "Заказ")} #{order.id.slice(0, 8)}</span>
+                      <span className={styles.orderDate}>{formatDateTime(order.createdAt)}</span>
                     </div>
-                  ))}
-                </div>
-              ))
-            }
-          </div>
-        )}
-
-        {/* Избранное */}
-        {activeTab === "favorites" && (
-          <div className="favorites-list">
-            {favorites.length === 0 ? <p>У вас пока нет избранного</p> :
-              favorites.map(fav => (
-                <div key={fav.id} className="favorite-item">
-                  <img src={fav.product.imageUrl} alt={fav.product.name} />
-                  <div>
-                    <p className="product-name">{fav.product.name}</p>
-                    <p className="product-desc">{truncateText(fav.product.description, 100)}</p>
-                    <span>{fav.product.price.toFixed(2)} $</span>
+                    <div className={styles.orderItems}>
+                      {order.items.map((item, idx) => (
+                        <div key={idx} className={styles.orderItem}>
+                          {item.imageUrl && <img src={item.imageUrl} alt={item.productName} />}
+                          <div className={styles.itemInfo}>
+                            <p className={styles.itemName}>{item.productName}</p>
+                            <p className={styles.itemPrice}>
+                              {item.quantity} {t("profile.orders.times", "×")} {item.price.toLocaleString("ru-RU")} $
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))
-            }
+                ))}
+              </div>
+            )}
           </div>
         )}
 
-        {/* Настройки */}
-        {activeTab === "settings" && user && (
-          <div className="settings">
-            <h3>Настройка аккаунта</h3>
-            <p>Дата регистрации: <strong>{formatDateTime(user.createdAt)}</strong></p>
-            <div className="settings-buttons">
-              <button className="edit-btn" onClick={() => setIsEditModalOpen(true)}>Редактировать профиль</button>
-              <button className="password-btn" onClick={() => setIsPasswordModalOpen(true)}>Сменить пароль</button>
-              <button className="logoutButton" onClick={handleLogout}>Выйти из аккаунта</button>
+        {/* Favorites */}
+        {activeTab === "favorites" && (
+          <div className={styles.section}>
+            {loading ? (
+              <div className={styles.loading}>{t("profile.favorites.loading", "Гружка...")}</div>
+            ) : favorites.length === 0 ? (
+              <div className={styles.empty}>
+                <Heart size={48} />
+                <h3>{t("profile.favorites.emptyTitle", "Избранное пусто")}</h3>
+                <p>{t("profile.favorites.emptyText", "Добавьте товары в избранное, чтобы позже легко их найти")}</p>
+                <Link href="/catalog" className={styles.actionBtn}>
+                  {t("profile.favorites.catalogLink", "Перейти в каталог")}
+                </Link>
+              </div>
+            ) : (
+              <div className={styles.favoritesList}>
+                {favorites.map((fav) => (
+                  <div key={fav.id} className={styles.favoriteCard}>
+                    <img src={fav.product.imageUrl} alt={fav.product.name} />
+                    <div className={styles.favInfo}>
+                      <h4>{fav.product.name}</h4>
+                      <p>{fav.product.description}</p>
+                      <span className={styles.favPrice}>
+                        {fav.product.price.toLocaleString("ru-RU")} $
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Settings */}
+        {activeTab === "settings" && (
+          <div className={styles.section}>
+            <div className={styles.settingsCard}>
+              <h3>{t("profile.settings.title", "Настройка аккаунта")}</h3>
+
+              <div className={styles.settingItem}>
+                <Mail size={20} />
+                <div>
+                  <label>Email:</label>
+                  <p>{user.email}</p>
+                </div>
+              </div>
+
+              <div className={styles.settingItem}>
+                <User size={20} />
+                <div>
+                  <label>{t("profile.settings.role", "Роль")}:</label>
+                  <p>{user.role}</p>
+                </div>
+              </div>
+
+              <div className={styles.settingsActions}>
+                <button className={styles.btn} onClick={() => setIsEditModalOpen(true)}>
+                  <Edit2 size={18} />
+                  {t("profile.settings.editBtn", "Редактировать профиль")}
+                </button>
+                <button className={styles.btnWarning} onClick={() => setIsPasswordModalOpen(true)}>
+                  <Lock size={18} />
+                  {t("profile.settings.passwordBtn", "Сменить пароль")}
+                </button>
+                <button className={styles.btnDanger} onClick={handleLogout}>
+                  <LogOut size={18} />
+                  {t("profile.settings.logoutBtn", "Выйти из аккаунта")}
+                </button>
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Модалка редактирования профиля */}
+      {/* Edit Modal */}
       {isEditModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsEditModalOpen(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <h3>Редактировать профиль</h3>
-            <input type="text" placeholder="Имя" value={editUsername} onChange={e => setEditUsername(e.target.value)} />
-            <input type="email" placeholder="Email" value={editEmail} onChange={e => setEditEmail(e.target.value)} />
-            <div className="modal-actions">
-              <button className="cancel-btn" onClick={() => setIsEditModalOpen(false)}>Отмена</button>
-              <button className="save-btn" onClick={handleProfileSave}>Сохранить</button>
+        <div className={styles.modalOverlay} onClick={() => setIsEditModalOpen(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>{t("profile.modals.editTitle", "Отредактировать профиль")}</h3>
+              <button className={styles.closeBtn} onClick={() => setIsEditModalOpen(false)}>
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className={styles.modalForm}>
+              <div className={styles.formGroup}>
+                <label>{t("profile.modals.usernameLabel", "Имя пользователя")}</label>
+                <input
+                  type="text"
+                  value={editUsername}
+                  onChange={(e) => setEditUsername(e.target.value)}
+                  placeholder={t("profile.modals.usernamePlaceholder", "Введите имя")}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  placeholder={t("profile.modals.emailPlaceholder", "Введите email")}
+                />
+              </div>
+
+              <div className={styles.modalActions}>
+                <button className={styles.btnSecondary} onClick={() => setIsEditModalOpen(false)}>
+                  {t("profile.modals.cancelBtn", "Отмена")}
+                </button>
+                <button className={styles.btnPrimary} onClick={handleProfileSave}>
+                  {t("profile.modals.saveBtn", "Сохранить изменения")}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Модалка смены пароля */}
+      {/* Password Modal */}
       {isPasswordModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsPasswordModalOpen(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <h3>Смена пароля</h3>
-            <input type="password" placeholder="Старый пароль" value={oldPassword} onChange={e => setOldPassword(e.target.value)} />
-            <input type="password" placeholder="Новый пароль" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
-            <input type="password" placeholder="Подтвердите новый пароль" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
-            <div className="modal-actions">
-              <button className="cancel-btn" onClick={() => setIsPasswordModalOpen(false)}>Отмена</button>
-              <button className="save-btn" onClick={handlePasswordChange}>Сохранить</button>
+        <div className={styles.modalOverlay} onClick={() => setIsPasswordModalOpen(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>{t("profile.modals.passwordTitle", "Смена пароля")}</h3>
+              <button className={styles.closeBtn} onClick={() => setIsPasswordModalOpen(false)}>
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className={styles.modalForm}>
+              <div className={styles.formGroup}>
+                <label>{t("profile.modals.currentPasswordLabel", "Текущий пароль")}</label>
+                <input
+                  type="password"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  placeholder="••••••••"
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>{t("profile.modals.newPasswordLabel", "Новый пароль")}</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>{t("profile.modals.confirmPasswordLabel", "Подтвердить пароль")}</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                />
+              </div>
+
+              <div className={styles.modalActions}>
+                <button className={styles.btnSecondary} onClick={() => setIsPasswordModalOpen(false)}>
+                  {t("profile.modals.cancelBtn", "Отмена")}
+                </button>
+                <button className={styles.btnPrimary} onClick={handlePasswordChange}>
+                  {t("profile.modals.changePasswordBtn", "Изменить пароль")}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
-
-      <style jsx>{`
-        .profile-page {
-          max-width: 950px;
-          margin: 50px auto;
-          background: #fff;
-          padding: 40px;
-          border-radius: 20px;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-          font-family: "Segoe UI", sans-serif;
-        }
-        .profile-header { display: flex; align-items: center; gap: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
-        .profile-avatar img { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; }
-        .profile-info h2 { margin: 0; font-size: 26px; }
-        .profile-info p { color: #555; margin-top: 4px; }
-
-        .edit-btn { background: #2563eb; color: white; border: none; padding: 10px 16px; border-radius: 10px; cursor: pointer; margin-top: 10px; transition: 0.3s; }
-        .edit-btn:hover { background: #1d4ed8; }
-
-        .tabs { display: flex; gap: 10px; margin-top: 30px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .tabs button { background: none; border: none; padding: 10px 20px; cursor: pointer; font-size: 16px; color: #555; border-radius: 8px; transition: 0.2s; }
-        .tabs button.active { background: #2563eb; color: white; }
-
-        .tab-content { margin-top: 30px; }
-        .order-card, .favorite-item, .settings { background: #f9fafb; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
-        .statusDone { color: #16a34a; font-weight: bold; }
-        .statusInProgress { color: #eab308; font-weight: bold; }
-
-        .order-item, .favorite-item { display: flex; align-items: center; gap: 15px; margin-top: 10px; }
-        .order-item img, .favorite-item img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; }
-
-        .product-name { font-weight: 600; margin-bottom: 4px; }
-        .product-desc { font-size: 14px; color: #555; margin-bottom: 6px; }
-
-        .password-btn, .logoutButton { margin-top: 10px; padding: 10px 20px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.3s; }
-        .password-btn { background: #f59e0b; color: white; }
-        .password-btn:hover { background: #d97706; }
-        .logoutButton { background: #ef4444; color: white; }
-        .logoutButton:hover { background: #dc2626; }
-
-        /* Модалка */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        /* только стили модалок и кнопок внутри модалки */
-      .modal {
-        background: white;
-        padding: 25px;
-        border-radius: 16px;
-        width: 400px;
-        max-width: 90%;
-        animation: fadeIn 0.3s ease;
-        display: flex;
-        flex-direction: column;
-        gap: 15px; /* расстояние между строками внутри модалки */
-      }
-
-      .modal input {
-        width: 95%;
-        padding: 10px;
-        border-radius: 8px;
-        border: 1px solid #ccc;
-        margin: 0; /* убираем лишние внешние отступы */
-      }
-
-      .modal-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 12px; /* расстояние между кнопками */
-        margin-top: 10px; /* отступ сверху, чтобы отделить кнопки от полей */
-      }
-      
-      .modal-actions button{
-       height: 42px;
-  min-width: 120px;
-  border-radius: 10px;
-  border: none;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s;
-      }
-      /* Горизонтальные кнопки в настройках */
-.settings-buttons {
-  display: flex;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.settings-buttons button {
-  flex: none;
-  padding: 10px 16px;
-  height: 42px; /* 👈 фиксированная высота для всех */
-  min-width: 120px;
-  border-radius: 10px;
-  border: none;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* одинаковый стиль, отличаются только цвета */
-.settings-buttons .edit-btn {
-  background: #2563eb;
-  color: white;
-}
-.settings-buttons .edit-btn:hover {
-  background: #1d4ed8;
-}
-
-.settings-buttons .password-btn {
-  background: #f59e0b;
-  color: white;
-}
-.settings-buttons .password-btn:hover {
-  background: #d97706;
-}
-
-.settings-buttons .logoutButton {
-  background: #ef4444;
-  color: white;
-}
-.settings-buttons .logoutButton:hover {
-  background: #dc2626;
-}
-
-      }
-      .cancel-btn {
-  background: #f3f4f6;
-  color: #111;
-  border: none;
-  padding: 10px 18px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.cancel-btn:hover { background: #e5e7eb; }
-.save-btn {
-  background: #2563eb;
-  color: #fff;
-  border: none;
-  padding: 10px 18px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-.save-btn:hover { background: #1d4ed8; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-      `}</style>
     </div>
   );
 }
