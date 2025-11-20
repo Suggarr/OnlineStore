@@ -109,10 +109,6 @@ namespace OnlineStore.Application.Services
             {
                 throw new InvalidOperationException("Старый пароль неверный.");
             }
-            //if (user == null || !await _passwordHasher.VerifyPassword(user.PasswordHash, updateUserPasswordDto.OldPassword))
-            //{
-            //    throw new InvalidOperationException();
-            //}
             user.PasswordHash = await _passwordHasher.HashPassword(updateUserPasswordDto.NewPassword);
             await _userRepository.UpdateAsync(user);
         }
