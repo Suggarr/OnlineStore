@@ -5,7 +5,7 @@ using OnlineStore.Application.Interfaces;
 
 namespace OnlineStore.WebAPI.Controllers
 {
-    [AllowAnonymous]
+    [Authorize(Policy = "AdminPolicy")]
     [ApiController]
     [Route("api/[controller]")]
     public class ProductsController : ControllerBase
@@ -19,6 +19,7 @@ namespace OnlineStore.WebAPI.Controllers
             _logger = logger;
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProductDto>>> GetAll()
         {
@@ -27,6 +28,7 @@ namespace OnlineStore.WebAPI.Controllers
             return Ok(products);
         }
 
+        [AllowAnonymous]
         [HttpGet("by-categoryId/{id:guid}")]
         public async Task<ActionResult<IEnumerable<ProductDto>>> GetByCategoryId(Guid id)
         {
@@ -35,6 +37,7 @@ namespace OnlineStore.WebAPI.Controllers
             return Ok(products);
         }
 
+        [AllowAnonymous]
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<ProductDto>> GetById(Guid id)
         {
@@ -49,7 +52,6 @@ namespace OnlineStore.WebAPI.Controllers
             return Ok(product);
         }
 
-        [Authorize(Policy = "AdminPolicy")]
         [HttpPost]
         public async Task<ActionResult<ProductDto>> Create([FromBody] CreateProductDto dto)
         {
@@ -66,7 +68,6 @@ namespace OnlineStore.WebAPI.Controllers
             }
         }
 
-        [Authorize(Policy = "AdminPolicy")]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductDto dto)
         {
@@ -84,7 +85,6 @@ namespace OnlineStore.WebAPI.Controllers
             return Ok(id);
         }
 
-        [Authorize(Policy = "AdminPolicy")]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {

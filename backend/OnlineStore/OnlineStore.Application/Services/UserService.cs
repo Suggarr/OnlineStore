@@ -90,8 +90,23 @@ namespace OnlineStore.Application.Services
             var user = await _userRepository.GetByIdAsync(id);
             if (user == null) return false;
 
+            if (user.Email != dto.Email)
+            {
+                var emailExists = await _userRepository.ExistsByEmailAsync(dto.Email);
+                if (emailExists)
+                    throw new InvalidOperationException("Email уже используется другим пользователем.");
+            }
+
+            if (user.UserName != dto.Username)
+            {
+                var usernameExists = await _userRepository.ExistsByUsernameAsync(dto.Username);
+                if (usernameExists)
+                    throw new InvalidOperationException("Имя пользователя уже занято.");
+            }
+
             user.UserName = dto.Username;
             user.Email = dto.Email;
+
             await _userRepository.UpdateAsync(user);
             return true;
         }

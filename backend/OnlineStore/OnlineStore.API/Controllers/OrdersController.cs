@@ -6,9 +6,9 @@ using OnlineStore.Application.Services;
 
 namespace OnlineStore.API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class OrdersController : ControllerBase
     {
         private readonly IOrderService _orderService;

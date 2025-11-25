@@ -6,7 +6,7 @@ using OnlineStore.Application.Interfaces;
 
 namespace OnlineStore.API.Controllers
 {
-    [AllowAnonymous]
+    [Authorize(Policy = "AdminPolicy")]
     [ApiController]
     [Route("api/[controller]")]
     public class CategoriesController : ControllerBase
@@ -20,6 +20,7 @@ namespace OnlineStore.API.Controllers
             _logger = logger;
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CategoryDto>>> GetAll()
         {
@@ -29,6 +30,7 @@ namespace OnlineStore.API.Controllers
             return Ok(categories);
         }
 
+        [AllowAnonymous]
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<CategoryDto>> GetById(Guid id)
         {
@@ -42,7 +44,6 @@ namespace OnlineStore.API.Controllers
             return Ok(category);
         }
 
-        [Authorize(Policy = "AdminPolicy")]
         [HttpPost]
         public async Task<ActionResult<CategoryDto>> Create([FromBody] CreateCategoryDto dto)
         {
@@ -59,7 +60,6 @@ namespace OnlineStore.API.Controllers
             }
         }
 
-        [Authorize(Policy = "AdminPolicy")]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update([FromBody] UpdateCategoryDto dto, Guid id)
         {
@@ -67,7 +67,6 @@ namespace OnlineStore.API.Controllers
             return Ok(updated);
         }
 
-        [Authorize(Policy = "AdminPolicy")]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {

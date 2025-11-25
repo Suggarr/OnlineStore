@@ -7,9 +7,9 @@ using System.Security.Claims;
 
 namespace OnlineStore.API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class CartItemsController : ControllerBase
     {
         private readonly ICartService _cartService;

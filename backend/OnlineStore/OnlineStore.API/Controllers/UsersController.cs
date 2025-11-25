@@ -8,6 +8,7 @@ using System.Security.Claims;
 
 namespace OnlineStore.API.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class UsersController : ControllerBase
@@ -32,7 +33,6 @@ namespace OnlineStore.API.Controllers
             return Ok(user);
         }
 
-        [Authorize]
         [HttpGet("infome")]
         public async Task<ActionResult<UserDto>> GetCurrentUser()
         {
@@ -52,7 +52,7 @@ namespace OnlineStore.API.Controllers
             return Unauthorized();
         }
 
-        [Authorize(Policy = "AdminPolicy")]
+        [Authorize(Policy = "SuperAdminPolicy")]
         [HttpGet]
         public async Task<ActionResult<UserDto>> GetAll()
         {
@@ -61,18 +61,22 @@ namespace OnlineStore.API.Controllers
             return Ok(users);
         }
 
-        [Authorize]
         [HttpPut("infome/name")]
         public async Task<IActionResult> Update([FromBody] UpdateUserDto dto)
         {
             var userId = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (Guid.TryParse(userId, out Guid UserId))
+            if (!Guid.TryParse(userId, out Guid UserId))
+            { 
+                _logger.LogWarning("Попытка несанкционированного доступа при обновлении профиля");
+                return Unauthorized();
+            }
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    _logger.LogWarning("Ошибка валидации данных при обновлении профиля");
-                    return BadRequest(ModelState);
-                }
+                _logger.LogWarning("Ошибка валидации данных при обновлении профиля");
+                return BadRequest(ModelState);
+            }
+            try
+            {
                 var success = await _userService.UpdateAsync(UserId, dto);
                 _logger.LogInformation($"Пользователь с Id {UserId} обновляет свои данные (Email/Username)");
                 if (!success)
@@ -83,11 +87,13 @@ namespace OnlineStore.API.Controllers
 
                 return Ok();
             }
-            _logger.LogWarning("Попытка несанкционированного доступа при обновлении профиля");
-            return Unauthorized();
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning($"Пользователь с Id {UserId} не смог обновить свои данные (Email/Username): {ex.Message}");
+                return Conflict(ex.Message);
+            }
         }
 
-        [Authorize]
         [HttpPatch("infome/password")]
         public async Task<IActionResult> UpdatePassword([FromBody] UpdatePasswordDto updatePasswordDto)
         {
