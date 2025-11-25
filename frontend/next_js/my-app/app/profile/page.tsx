@@ -12,6 +12,7 @@ import { toast } from "react-toastify";
 import { useLocale } from "@/contexts/LocaleContext";
 
 type OrderItem = {
+  productId?: string;
   productName: string;
   price: number;
   quantity: number;
@@ -27,6 +28,7 @@ type OrderData = {
 type FavoriteData = {
   id: string;
   product: {
+    id: string;
     name: string;
     description: string;
     price: number;
@@ -37,7 +39,7 @@ type FavoriteData = {
 export default function ProfilePage() {
   const router = useRouter();
   const { user, logout, login } = useAuth();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
 
   const [activeTab, setActiveTab] = useState("orders");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -54,15 +56,21 @@ export default function ProfilePage() {
   const [favorites, setFavorites] = useState<FavoriteData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const formatDateTime = (dateStr: string) => {
+  const formatDateTime = (dateStr: string, loc: "ru" | "en" = "ru") => {
     const d = new Date(dateStr);
-    return d.toLocaleString("ru-RU", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    const months = {
+      ru: ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"],
+      en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    };
+    
+    const monthList = months[loc];
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = monthList[d.getMonth()];
+    const year = d.getFullYear();
+    const hour = String(d.getHours()).padStart(2, "0");
+    const minute = String(d.getMinutes()).padStart(2, "0");
+    
+    return `${day} ${month} ${year}, ${hour}:${minute}`;
   };
 
   useEffect(() => {
@@ -206,9 +214,9 @@ export default function ProfilePage() {
               <div className={styles.ordersList}>
                 {orders.map((order) => (
                   <div key={order.id} className={styles.orderCard}>
-                    <div className={styles.orderHeader}>
+                  <div className={styles.orderHeader}>
                       <span className={styles.orderId}>{t("profile.orders.orderLabel", "Заказ")} #{order.id.slice(0, 8)}</span>
-                      <span className={styles.orderDate}>{formatDateTime(order.createdAt)}</span>
+                      <span className={styles.orderDate}>{formatDateTime(order.createdAt, (locale as "ru" | "en") || "ru")}</span>
                     </div>
                     <div className={styles.orderItems}>
                       {order.items.map((item, idx) => (
@@ -220,6 +228,14 @@ export default function ProfilePage() {
                               {item.quantity} {t("profile.orders.times", "×")} {item.price.toLocaleString("ru-RU")} $
                             </p>
                           </div>
+                          {item.productId && (
+                            <button 
+                              className={styles.viewBtn}
+                              onClick={() => router.push(`/products/${item.productId}`)}
+                            >
+                              →
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -256,6 +272,12 @@ export default function ProfilePage() {
                         {fav.product.price.toLocaleString("ru-RU")} $
                       </span>
                     </div>
+                    <button 
+                      className={styles.viewBtn}
+                      onClick={() => router.push(`/products/${fav.product.id}`)}
+                    >
+                      →
+                    </button>
                   </div>
                 ))}
               </div>
@@ -274,14 +296,6 @@ export default function ProfilePage() {
                 <div>
                   <label>Email:</label>
                   <p>{user.email}</p>
-                </div>
-              </div>
-
-              <div className={styles.settingItem}>
-                <User size={20} />
-                <div>
-                  <label>{t("profile.settings.role", "Роль")}:</label>
-                  <p>{user.role}</p>
                 </div>
               </div>
 

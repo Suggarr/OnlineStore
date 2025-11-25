@@ -9,9 +9,11 @@ import Link from "next/link";
 import styles from "./catalog.module.css";
 import { toast } from "react-toastify";
 import { useLocale } from "@/contexts/LocaleContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function CatalogPage() {
   const { t } = useLocale();
+  const { user } = useAuth();
   const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [allProducts, setAllProducts] = useState<ProductDto[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<ProductDto[]>([]);
@@ -20,6 +22,7 @@ export default function CatalogPage() {
   const [sortBy, setSortBy] = useState("popular");
   const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -29,7 +32,7 @@ export default function CatalogPage() {
         const [categoriesRes, productsRes, favoritesRes] = await Promise.all([
           apiClient.get<CategoryDto[]>("/Categories"),
           apiClient.get<ProductDto[]>("/Products"),
-          apiClient.get<any[]>("/Favorites"),
+          user ? apiClient.get<any[]>("/Favorites") : Promise.resolve({ data: [] }),
         ]);
 
         if (categoriesRes.data) {
@@ -85,6 +88,12 @@ export default function CatalogPage() {
 
   const toggleFavorite = async (e: React.MouseEvent, productId: string) => {
     e.preventDefault();
+    
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+    
     const newFavorites = new Set(favorites);
     const wasInFavorites = newFavorites.has(productId);
     
@@ -242,6 +251,28 @@ export default function CatalogPage() {
           )}
         </main>
       </div>
+
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <div className={styles.authModalOverlay} onClick={() => setShowAuthModal(false)}>
+          <div className={styles.authModal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.authModalHeader}>
+              <h2>{t("catalog.authModal.title", "Требуется авторизация")}</h2>
+            </div>
+            <div className={styles.authModalBody}>
+              <p>{t("catalog.authModal.message", "Пожалуйста, войдите в аккаунт, чтобы добавлять товары в избранное и совершать покупки")}</p>
+            </div>
+            <div className={styles.authModalActions}>
+              <button className={styles.authModalCancel} onClick={() => setShowAuthModal(false)}>
+                {t("catalog.authModal.cancelBtn", "Закрыть")}
+              </button>
+              <button className={styles.authModalLogin} onClick={() => router.push("/login")}>
+                {t("catalog.authModal.loginBtn", "Перейти на вход")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

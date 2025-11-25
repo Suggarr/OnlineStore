@@ -7,16 +7,19 @@ import { ProductDto } from "@/utils/types";
 import Link from "next/link";
 import { Heart, ShoppingCart, Share2, ChevronLeft, Star, Package, Truck, Shield } from "lucide-react";
 import { useLocale } from "@/contexts/LocaleContext";
+import { useAuth } from "@/contexts/AuthContext";
 import styles from "./product.module.css";
 import { toast } from "react-toastify";
 
 export default function ProductPage() {
   const router = useRouter();
   const { id } = useParams();
+  const { user } = useAuth();
   const [product, setProduct] = useState<ProductDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<ProductDto[]>([]);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const { t } = useLocale();
 
   useEffect(() => {
@@ -25,7 +28,7 @@ export default function ProductPage() {
         setLoading(true);
         const [productRes, isFavRes] = await Promise.all([
           apiClient.get<ProductDto>(`/Products/${id}`),
-          apiClient.get<boolean>(`/Favorites/contains/${id}`),
+          user ? apiClient.get<boolean>(`/Favorites/contains/${id}`) : Promise.resolve({ data: false }),
         ]);
         
         if (productRes.data) {
@@ -55,6 +58,11 @@ export default function ProductPage() {
   }, [id]);
 
   const handleAddToCart = async () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+    
     if (!product) return;
     
     try {
@@ -77,6 +85,11 @@ export default function ProductPage() {
   };
 
   const toggleFavorite = async () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+    
     try {
       await apiClient.post(`/Favorites/${product?.id}/toggle`, {});
       setIsFavorite(!isFavorite);
@@ -152,19 +165,6 @@ export default function ProductPage() {
           <div className={styles.header}>
             <div>
               <h1>{product.name}</h1>
-              <div className={styles.rating}>
-                <div className={styles.stars}>
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      size={16}
-                      fill={i < 4 ? "currentColor" : "none"}
-                      color={i < 4 ? "var(--warning-color)" : "var(--border-color)"}
-                    />
-                  ))}
-                </div>
-                <span>(42 отзыва)</span>
-              </div>
             </div>
             <button
               className={`${styles.favoriteBtn} ${isFavorite ? styles.active : ""}`}
@@ -180,7 +180,7 @@ export default function ProductPage() {
               <span className={styles.mainPrice}>
                 {product.price.toLocaleString("ru-RU")} $
               </span>
-              <span className={styles.savings}>Экономия 20%</span>
+              <span className={styles.savings}>{t('product.savings', 'Экономия 20%')}</span>
             </div>
           </div>
 
@@ -199,7 +199,7 @@ export default function ProductPage() {
 
             <button className={styles.shareBtn} onClick={handleShare}>
               <Share2 size={20} />
-              <span>{t('product.share', 'Поделиться')}</span>
+              <span>{t('product.share.label', 'Поделиться')}</span>
             </button>
           </div>
 
@@ -246,6 +246,28 @@ export default function ProductPage() {
             ))}
           </div>
         </section>
+      )}
+
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <div className={styles.authModalOverlay} onClick={() => setShowAuthModal(false)}>
+          <div className={styles.authModal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.authModalHeader}>
+              <h2>{t("product.authModal.title", "Требуется авторизация")}</h2>
+            </div>
+            <div className={styles.authModalBody}>
+              <p>{t("product.authModal.message", "Пожалуйста, войдите в аккаунт, чтобы добавлять товары в избранное и совершать покупки")}</p>
+            </div>
+            <div className={styles.authModalActions}>
+              <button className={styles.authModalCancel} onClick={() => setShowAuthModal(false)}>
+                {t("product.authModal.cancelBtn", "Закрыть")}
+              </button>
+              <button className={styles.authModalLogin} onClick={() => router.push("/login")}>
+                {t("product.authModal.loginBtn", "Перейти на вход")}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

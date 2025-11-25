@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/apiClient";
-import { Trash2, Edit2, Plus, X } from "lucide-react";
+import { Trash2, Edit2, Plus, X, Package } from "lucide-react";
 import { toast } from "react-toastify";
 import styles from "../admin.module.css";
 import { useLocale } from "@/contexts/LocaleContext";
@@ -14,11 +14,17 @@ type Product = {
   price: number;
   imageUrl?: string;
   categoryId?: string;
+  categoryName?: string;
+};
+
+type Category = {
+  id: string;
+  name: string;
 };
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -30,47 +36,49 @@ export default function AdminProducts() {
     imageUrl: "",
   });
   const [editingId, setEditingId] = useState<string | null>(null);
+  const { t } = useLocale();
+
+  const fetchCategories = async () => {
+    try {
+      const res = await apiClient.get<Category[]>("/Categories");
+      setCategories(res.data || []);
+    } catch (err) {
+      console.error("fetchCategories error:", err);
+    }
+  };
 
   const fetchProducts = async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await apiClient.get<Product[]>("/Products");
-      setProducts((res.data as Product[]) || []);
+      const productsWithCategory = (res.data || []).map((p: Product) => {
+        const cat = categories.find((c) => c.id === p.categoryId);
+        return { ...p, categoryName: cat ? cat.name : "-" };
+      });
+      setProducts(productsWithCategory);
     } catch (err) {
-      console.error("fetchProducts error:", err);
-      setError((err as Error)?.message || t("admin.products.errorLoad", "Ошибка загрузки товаров"));
+      console.error(err);
+      setError(t("admin.products.errorLoad", "Ошибка загрузки товаров"));
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchCategories = async () => {
-    try {
-      const res = await apiClient.get<any[]>("/Categories");
-      setCategories((res.data as any[]) || []);
-    } catch (err) {
-      console.error("fetchCategories error:", err);
-    }
-  };
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("admin.products.deleteConfirm", "Вы уверены, что хотите удалить этот товар?"))) return;
-    try {
-      await apiClient.del(`/Products/${id}`);
-      setProducts((prev) => prev.filter((p) => p.id !== id));
-      toast.success(t("admin.products.deleteSuccess", "Товар удален"));
-    } catch (err) {
-      toast.error((err as Error)?.message || t("admin.products.deleteFail", "Ошибка удаления товара"));
-    }
-  };
+  useEffect(() => {
+    if (categories.length > 0) fetchProducts();
+  }, [categories]);
 
   const handleOpenModal = (product?: Product) => {
     if (product) {
       setFormData(product);
       setEditingId(product.id);
     } else {
-      setFormData({ name: "", description: "", price: 0, categoryId: "" });
+      setFormData({ name: "", description: "", price: 0, categoryId: "", imageUrl: "" });
       setEditingId(null);
     }
     setShowModal(true);
@@ -79,60 +87,56 @@ export default function AdminProducts() {
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingId(null);
-    setFormData({ name: "", description: "", price: 0, categoryId: "" });
+    setFormData({ name: "", description: "", price: 0, categoryId: "", imageUrl: "" });
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm(t("admin.products.deleteConfirm", "Удалить товар?"))) return;
+    try {
+      await apiClient.del(`/Products/${id}`);
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+      toast.success(t("admin.products.deleteSuccess", "Товар удален"));
+    } catch (err) {
+      toast.error(t("admin.products.deleteFail", "Ошибка удаления товара"));
+    }
   };
 
   const handleSubmit = async () => {
-    // Отдельная проверка для категории — показываем понятное сообщение
-    if (!formData.categoryId) {
-      toast.warn(t("admin.products.chooseCategory", "Выберите категорию"));
+    if (!formData.name || formData.name.length > 50) {
+      toast.warn("Название должно быть до 50 символов");
       return;
     }
-
-    if (!formData.name || !formData.description || !formData.price || !formData.imageUrl) {
-      toast.warn(t("admin.products.fillAll", "Заполните все поля (включая URL изображения)"));
+    if (!formData.description || formData.description.length > 500) {
+      toast.warn("Описание должно быть до 500 символов");
+      return;
+    }
+    if (!formData.price || formData.price < 0.01 || formData.price > 100000) {
+      toast.warn("Цена должна быть от 0.01 до 100000");
+      return;
+    }
+    if (!formData.imageUrl || !/^https?:\/\/.+\..+/.test(formData.imageUrl)) {
+      toast.warn("Введите корректный URL изображения");
+      return;
+    }
+    if (!formData.categoryId) {
+      toast.warn("Выберите категорию");
       return;
     }
 
     try {
       if (editingId) {
-        // При обновлении используем PUT и отправляем все поля
-        const updateData = {
-          id: editingId,
-          name: formData.name,
-          description: formData.description,
-          price: formData.price,
-          categoryId: formData.categoryId || "",
-          imageUrl: formData.imageUrl || "",
-        };
-        await (apiClient as any).put(`/Products/${editingId}`, updateData);
-        toast.success(t("admin.products.saveSuccess", "Товар обновлен"));
+        await apiClient.put(`/Products/${editingId}`, formData);
+        toast.success("Товар обновлен");
       } else {
-        // При создании отправляем все поля (включая imageUrl)
-        const createData = {
-          name: formData.name,
-          description: formData.description,
-          price: formData.price,
-          categoryId: formData.categoryId || "",
-          imageUrl: formData.imageUrl || "",
-        };
-        await apiClient.post("/Products", createData);
-        toast.success(t("admin.products.saveSuccess", "Товар добавлен"));
+        await apiClient.post("/Products", formData);
+        toast.success("Товар добавлен");
       }
       handleCloseModal();
       fetchProducts();
     } catch (err) {
-      console.error("Submit error:", err);
-      toast.error((err as Error)?.message || t("admin.products.saveFail", "Ошибка сохранения товара"));
+      toast.error("Ошибка сохранения");
     }
   };
-
-  useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-  }, []);
-
-  const { t } = useLocale();
 
   return (
     <>
@@ -143,19 +147,15 @@ export default function AdminProducts() {
             justifyContent: "space-between",
             alignItems: "center",
             marginBottom: "1.5rem",
-            gap: "1rem",
             flexWrap: "wrap",
+            gap: "1rem",
           }}
         >
           <h2 className={styles.sectionTitle}>
             <Package size={24} />
             {t("admin.products.title", "Управление товарами")}
           </h2>
-          <button
-            className={styles.addBtn}
-            onClick={() => handleOpenModal()}
-            title={t("admin.products.addProduct", "Добавить новый товар")}
-          >
+          <button className={styles.addBtn} onClick={() => handleOpenModal()}>
             <Plus size={18} /> {t("admin.products.addProduct", "Добавить товар")}
           </button>
         </div>
@@ -175,53 +175,75 @@ export default function AdminProducts() {
         )}
 
         {loading ? (
-            <div className={styles.loading}>
+          <div className={styles.loading}>
             <div className={styles.spinner}></div>
             <p>{t("admin.products.loading", "Загрузка товаров...")}</p>
           </div>
         ) : products.length === 0 ? (
-            <div className={styles.emptyState}>
+          <div className={styles.emptyState}>
             <div className={styles.emptyIcon}>📭</div>
-            <h3>{t("admin.products.notFoundTitle", "Товары не найдены")}</h3>
-            <p>{t("admin.products.notFoundText", "Добавьте первый товар нажав кнопку выше")}</p>
+            <h3>Товары не найдены</h3>
+            <p>Добавьте первый товар</p>
           </div>
         ) : (
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>{t("admin.products.table.name", "Название")}</th>
-                  <th>{t("admin.products.table.description", "Описание")}</th>
-                  <th>{t("admin.products.table.price", "Цена")}</th>
-                  <th>{t("admin.products.table.actions", "Действия")}</th>
+                  <th>Фото</th>
+                  <th>Название</th>
+                  <th>Описание</th>
+                  <th>Категория</th>
+                  <th>Цена</th>
+                  <th>Действия</th>
                 </tr>
               </thead>
+
               <tbody>
                 {products.map((p) => (
                   <tr key={p.id}>
-                    <td style={{ fontWeight: 600, color: "#111827" }}>
-                      {p.name}
+                    {/* Фото */}
+                    <td>
+                      {p.imageUrl ? (
+                        <img
+                          src={p.imageUrl}
+                          alt={p.name}
+                          style={{
+                            width: "60px",
+                            height: "60px",
+                            objectFit: "cover",
+                            borderRadius: "6px",
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: "60px",
+                            height: "60px",
+                            background: "#eee",
+                            borderRadius: "6px",
+                          }}
+                        />
+                      )}
                     </td>
-                    <td style={{ maxWidth: "300px", wordBreak: "break-word" }}>
-                      {p.description}
+
+                    <td style={{ fontWeight: 600 }}>{p.name}</td>
+                    <td style={{ maxWidth: "300px", wordBreak: "break-word" }}>{p.description}</td>
+
+                    <td style={{ color: "#6b7280", fontWeight: 500 }}>
+                      {p.categoryName}
                     </td>
+
                     <td style={{ fontWeight: 600, color: "#2563eb" }}>
                       ${p.price.toFixed(2)}
                     </td>
+
                     <td>
                       <div className={styles.actions}>
-                        <button
-                          className={styles.editBtn}
-                          onClick={() => handleOpenModal(p)}
-                          title="Редактировать"
-                        >
+                        <button className={styles.editBtn} onClick={() => handleOpenModal(p)}>
                           <Edit2 size={16} />
                         </button>
-                        <button
-                          className={styles.deleteBtn}
-                          onClick={() => handleDelete(p.id)}
-                          title="Удалить"
-                        >
+                        <button className={styles.deleteBtn} onClick={() => handleDelete(p.id)}>
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -234,69 +256,43 @@ export default function AdminProducts() {
         )}
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div className={styles.modal} style={{ display: "flex" }}>
           <div className={styles.modalContent}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-              <h3 className={styles.modalHeader}>{editingId ? t("admin.products.modal.edit", "Редактировать товар") : t("admin.products.modal.add", "Добавить товар")}</h3>
-              <button
-                onClick={handleCloseModal}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "#666" }}
-              >
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1.5rem" }}>
+              <h3 className={styles.modalHeader}>
+                {editingId ? "Редактировать товар" : "Добавить товар"}
+              </h3>
+              <button onClick={handleCloseModal} style={{ background: "none", border: "none", cursor: "pointer" }}>
                 <X size={24} />
               </button>
             </div>
 
             <div className={styles.modalForm}>
               <div className={styles.formGroup}>
-                <label>{t("admin.products.fields.name", "Название")}</label>
-                <input
-                  type="text"
-                  value={formData.name || ""}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder={t("admin.products.placeholders.name", "Название товара")}
-                />
+                <label>Название</label>
+                <input type="text" maxLength={50} value={formData.name || ""} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
               </div>
 
               <div className={styles.formGroup}>
-                <label>{t("admin.products.fields.description", "Описание")}</label>
-                <textarea
-                  value={formData.description || ""}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder={t("admin.products.placeholders.description", "Описание товара")}
-                  rows={4}
-                />
+                <label>Описание</label>
+                <textarea maxLength={300} rows={4} value={formData.description || ""} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
               </div>
 
               <div className={styles.formGroup}>
-                <label>{t("admin.products.fields.price", "Цена")}</label>
-                <input
-                  type="number"
-                  value={formData.price || 0}
-                  onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
-                  placeholder={t("admin.products.placeholders.price", "Цена")}
-                  step="0.01"
-                />
+                <label>Цена</label>
+                <input type="number" min={0.01} max={100000} step="0.01" value={formData.price || 0} onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })} />
               </div>
 
               <div className={styles.formGroup}>
-                <label>{t("admin.products.fields.imageUrl", "Ссылка на изображение")}</label>
-                <input
-                  type="text"
-                  value={formData.imageUrl || ""}
-                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                  placeholder={t("admin.products.placeholders.imageUrl", "https://.../image.jpg")}
-                />
+                <label>Ссылка на изображение</label>
+                <input type="url" value={formData.imageUrl || ""} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} />
               </div>
 
               <div className={styles.formGroup}>
-                <label>{t("admin.products.fields.category", "Категория")}</label>
-                <select
-                  value={formData.categoryId || ""}
-                  onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                >
-                  <option value="">{t("admin.products.selectCategory", "Выберите категорию")}</option>
+                <label>Категория</label>
+                <select value={formData.categoryId || ""} onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}>
+                  <option value="">Выберите категорию</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}
@@ -307,10 +303,10 @@ export default function AdminProducts() {
 
               <div className={styles.formActions}>
                 <button className={styles.submitBtn} onClick={handleSubmit}>
-                  {editingId ? t("common.save", "Сохранить") : t("common.add", "Добавить")}
+                  {editingId ? "Сохранить" : "Добавить"}
                 </button>
                 <button className={styles.cancelBtn} onClick={handleCloseModal}>
-                  {t("common.cancel", "Отмена")}
+                  Отмена
                 </button>
               </div>
             </div>
@@ -320,5 +316,3 @@ export default function AdminProducts() {
     </>
   );
 }
-
-import { Package } from "lucide-react";

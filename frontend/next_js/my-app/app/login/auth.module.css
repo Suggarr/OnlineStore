@@ -158,6 +158,7 @@
   border-radius: 0.5rem;
   border: 2px solid var(--border-color);
   transition: var(--transition);
+  overflow: hidden;
 }
 
 .inputWrapper:focus-within {
@@ -176,7 +177,7 @@
   flex: 1;
   border: none;
   background: transparent;
-  padding: 0.75rem 1rem 0.75rem 2.75rem;
+  padding: 0.75rem 2.75rem 0.75rem 2.75rem;
   font-size: 1rem;
   color: var(--text-primary);
 }
@@ -187,6 +188,29 @@
 
 .inputWrapper input:focus {
   outline: none;
+}
+
+/* Скрываем встроенные глазики браузера для password полей */
+.inputWrapper input[type="password"]::-webkit-credentials-auto-fill-button,
+.inputWrapper input[type="password"]::-webkit-reveal-button {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Для Edge */
+.inputWrapper input[type="password"]::-ms-reveal {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Отключаем встроенный глазик в Chrome/Safari */
+.inputWrapper input[type="password"] {
+  -webkit-text-security: disc;
 }
 
 .togglePassword {
@@ -200,6 +224,8 @@
   align-items: center;
   justify-content: center;
   transition: var(--transition);
+  z-index: 10;
+  padding: 0.5rem;
 }
 
 .togglePassword:hover {
@@ -226,7 +252,7 @@
   cursor: pointer;
 }
 
-.forgotLink {
+/* .forgotLink {
   color: var(--primary-color);
   text-decoration: none;
   font-weight: 600;
@@ -235,7 +261,7 @@
 
 .forgotLink:hover {
   color: var(--primary-dark);
-}
+} */
 
 .submitBtn {
   display: flex;

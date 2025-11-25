@@ -1,13 +1,27 @@
-export default function AdminDashboard() {
-  return (
-    <div className="admin-dashboard">
-      <h2>Общий обзор</h2>
+"use client";
 
-      <div className="stats-grid">
-        <div className="stat-card">🛒 Продажи: 124</div>
-        <div className="stat-card">👤 Пользователи: 57</div>
-        <div className="stat-card">🛍️ Товары: 32</div>
-        <div className="stat-card">💸 Доход: 84 500 $</div>
+import { Smile } from "lucide-react";
+import { useLocale } from "@/contexts/LocaleContext";
+import styles from "./overview.module.css";
+
+export default function AdminOverview() {
+  const { t } = useLocale();
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.wrapper}>
+        <div className={styles.content}>
+          <Smile size={80} className={styles.emptyIcon} />
+          <h1 className={styles.title}>
+            {t("admin.overview.welcomeTitle", "Добро пожаловать в админку!")}
+          </h1>
+          <p className={styles.subtitle}>
+            {t(
+              "admin.overview.welcomeText",
+              "Здесь вы можете управлять магазином и всеми его функциями."
+            )}
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/apiClient";
-import { Trash2, Edit2, Plus, X } from "lucide-react";
+import { Trash2, Edit2, Plus, X, FolderTree } from "lucide-react";
 import { toast } from "react-toastify";
 import styles from "../admin.module.css";
 import { useLocale } from "@/contexts/LocaleContext";
@@ -10,7 +10,7 @@ import { useLocale } from "@/contexts/LocaleContext";
 type Category = {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   image?: string;
 };
 
@@ -19,78 +19,24 @@ export default function AdminCategories() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const { t } = useLocale();
+
   const [formData, setFormData] = useState<Partial<Category>>({
     name: "",
     description: "",
+    image: ""
   });
-  const [editingId, setEditingId] = useState<string | null>(null);
 
   const fetchCategories = async () => {
-    setLoading(true);
-    setError(null);
     try {
       const res = await apiClient.get<Category[]>("/Categories");
-      setCategories((res.data as Category[]) || []);
+      setCategories(res.data || []);
     } catch (err) {
-      console.error("fetchCategories error:", err);
-      setError((err as Error)?.message || t("admin.categories.errorLoad", "Ошибка загрузки категорий"));
+      setError("Ошибка загрузки категорий");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm(t("admin.categories.deleteConfirm", "Вы уверены, что хотите удалить эту категорию?"))) return;
-    try {
-      await apiClient.del(`/Categories/${id}`);
-      setCategories((prev) => prev.filter((c) => c.id !== id));
-      toast.success(t("admin.categories.deleteSuccess", "Категория удалена"));
-    } catch (err) {
-      toast.error((err as Error)?.message || t("admin.categories.deleteFail", "Ошибка удаления категории"));
-    }
-  };
-
-  const handleOpenModal = (category?: Category) => {
-    if (category) {
-      setFormData(category);
-      setEditingId(category.id);
-    } else {
-      setFormData({ name: "", description: "" });
-      setEditingId(null);
-    }
-    setShowModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setEditingId(null);
-    setFormData({ name: "", description: "" });
-  };
-
-  const handleSubmit = async () => {
-    if (!formData.name || !formData.description) {
-      toast.warn(t("admin.categories.fillAll", "Заполните все поля"));
-      return;
-    }
-
-    try {
-      if (editingId) {
-        const updateData = {
-          id: editingId,
-          name: formData.name,
-          description: formData.description,
-        };
-        await (apiClient as any).put(`/Categories/${editingId}`, updateData);
-        toast.success(t("admin.categories.saveSuccess", "Категория обновлена"));
-      } else {
-        await apiClient.post("/Categories", formData);
-        toast.success(t("admin.categories.saveSuccess", "Категория добавлена"));
-      }
-      handleCloseModal();
-      fetchCategories();
-    } catch (err) {
-      console.error("Submit error:", err);
-      toast.error((err as Error)?.message || t("admin.categories.saveFail", "Ошибка сохранения категории"));
     }
   };
 
@@ -98,7 +44,61 @@ export default function AdminCategories() {
     fetchCategories();
   }, []);
 
-  const { t } = useLocale();
+  const handleOpenModal = (cat?: Category) => {
+    if (cat) {
+      setEditingId(cat.id);
+      setFormData(cat);
+    } else {
+      setEditingId(null);
+      setFormData({ name: "", description: "", image: "" });
+    }
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingId(null);
+    setFormData({ name: "", description: "", image: "" });
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Удалить категорию?")) return;
+
+    try {
+      await apiClient.del(`/Categories/${id}`);
+      setCategories((prev) => prev.filter((x) => x.id !== id));
+      toast.success("Категория удалена");
+    } catch (err) {
+      toast.error("Ошибка удаления");
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.name || formData.name.length > 50) {
+      toast.warn("Название должно быть до 50 символов");
+      return;
+    }
+
+    if (!formData.image || !/^https?:\/\/.+\..+/.test(formData.image)) {
+      toast.warn("Введите корректный URL изображения");
+      return;
+    }
+
+    try {
+      if (editingId) {
+        await apiClient.put(`/Categories/${editingId}`, formData);
+        toast.success("Категория обновлена");
+      } else {
+        await apiClient.post("/Categories", formData);
+        toast.success("Категория добавлена");
+      }
+
+      fetchCategories();
+      handleCloseModal();
+    } catch (err) {
+      toast.error("Ошибка сохранения");
+    }
+  };
 
   return (
     <>
@@ -109,20 +109,17 @@ export default function AdminCategories() {
             justifyContent: "space-between",
             alignItems: "center",
             marginBottom: "1.5rem",
-            gap: "1rem",
             flexWrap: "wrap",
+            gap: "1rem",
           }}
         >
           <h2 className={styles.sectionTitle}>
-            <Tag size={24} />
-            {t("admin.categories.title", "Управление категориями")}
+            <FolderTree size={24} />
+            Управление категориями
           </h2>
-          <button
-            className={styles.addBtn}
-            onClick={() => handleOpenModal()}
-            title="Добавить новую категорию"
-          >
-            <Plus size={18} /> {t("admin.categories.addCategory", "Добавить категорию")}
+
+          <button className={styles.addBtn} onClick={() => handleOpenModal()}>
+            <Plus size={18} /> Добавить категорию
           </button>
         </div>
 
@@ -143,46 +140,71 @@ export default function AdminCategories() {
         {loading ? (
           <div className={styles.loading}>
             <div className={styles.spinner}></div>
-            <p>{t("admin.categories.loading", "Загрузка категорий...")}</p>
+            <p>Загрузка категорий...</p>
           </div>
         ) : categories.length === 0 ? (
           <div className={styles.emptyState}>
-            <div className={styles.emptyIcon}>📂</div>
-            <h3>{t("admin.categories.notFoundTitle", "Категории не найдены")}</h3>
-            <p>{t("admin.categories.notFoundText", "Добавьте первую категорию нажав кнопку выше")}</p>
+            <div className={styles.emptyIcon}>📭</div>
+            <h3>Категорий нет</h3>
+            <p>Добавьте первую категорию</p>
           </div>
         ) : (
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>{t("admin.categories.table.name", "Название")}</th>
-                  <th>{t("admin.categories.table.description", "Описание")}</th>
-                  <th>{t("admin.categories.table.actions", "Действия")}</th>
+                  <th>Фото</th>
+                  <th>Название</th>
+                  <th>Описание</th>
+                  <th>Действия</th>
                 </tr>
               </thead>
+
               <tbody>
                 {categories.map((c) => (
                   <tr key={c.id}>
-                    <td style={{ fontWeight: 600, color: "#111827" }}>
-                      {c.name}
+                    <td>
+                      {c.image ? (
+                        <img
+                          src={c.image}
+                          alt={c.name}
+                          style={{
+                            width: "60px",
+                            height: "60px",
+                            objectFit: "cover",
+                            borderRadius: "6px",
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: "60px",
+                            height: "60px",
+                            background: "#eee",
+                            borderRadius: "6px",
+                          }}
+                        />
+                      )}
                     </td>
+
+                    <td style={{ fontWeight: 600 }}>{c.name}</td>
+
                     <td style={{ maxWidth: "300px", wordBreak: "break-word" }}>
-                      {c.description}
+                      {c.description || "-"}
                     </td>
+
                     <td>
                       <div className={styles.actions}>
                         <button
                           className={styles.editBtn}
                           onClick={() => handleOpenModal(c)}
-                          title="Редактировать"
                         >
                           <Edit2 size={16} />
                         </button>
+
                         <button
                           className={styles.deleteBtn}
                           onClick={() => handleDelete(c.id)}
-                          title="Удалить"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -196,15 +218,27 @@ export default function AdminCategories() {
         )}
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div className={styles.modal} style={{ display: "flex" }}>
           <div className={styles.modalContent}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-              <h3 className={styles.modalHeader}>{editingId ? t("admin.categories.modal.edit", "Редактировать категорию") : t("admin.categories.modal.add", "Добавить категорию")}</h3>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "1.5rem",
+              }}
+            >
+              <h3 className={styles.modalHeader}>
+                {editingId ? "Редактировать категорию" : "Добавить категорию"}
+              </h3>
+
               <button
                 onClick={handleCloseModal}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "#666" }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                }}
               >
                 <X size={24} />
               </button>
@@ -212,31 +246,47 @@ export default function AdminCategories() {
 
             <div className={styles.modalForm}>
               <div className={styles.formGroup}>
-                <label>{t("admin.categories.fields.name", "Название")}</label>
+                <label>Название</label>
                 <input
                   type="text"
+                  maxLength={50}
                   value={formData.name || ""}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder={t("admin.categories.placeholders.name", "Название категории")}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                 />
               </div>
 
               <div className={styles.formGroup}>
-                <label>{t("admin.categories.fields.description", "Описание")}</label>
+                <label>Описание</label>
                 <textarea
-                  value={formData.description || ""}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder={t("admin.categories.placeholders.description", "Описание категории")}
+                  maxLength={600}
                   rows={4}
+                  value={formData.description || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                ></textarea>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>URL изображения</label>
+                <input
+                  type="url"
+                  value={formData.image || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, image: e.target.value })
+                  }
                 />
               </div>
 
               <div className={styles.formActions}>
                 <button className={styles.submitBtn} onClick={handleSubmit}>
-                  {editingId ? t("common.save", "Сохранить") : t("common.add", "Добавить")}
+                  {editingId ? "Сохранить" : "Добавить"}
                 </button>
+
                 <button className={styles.cancelBtn} onClick={handleCloseModal}>
-                  {t("common.cancel", "Отмена")}
+                  Отмена
                 </button>
               </div>
             </div>
@@ -246,5 +296,3 @@ export default function AdminCategories() {
     </>
   );
 }
-
-import { Tag } from "lucide-react";

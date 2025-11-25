@@ -222,6 +222,25 @@
   font-size: 0.9rem;
 }
 
+.viewBtn {
+  align-self: center;
+  padding: 0.5rem 0.75rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: var(--transition);
+  font-weight: 600;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.viewBtn:hover {
+  background: var(--primary-dark);
+  transform: translateX(4px);
+}
+
 /* Favorites */
 .favoritesList {
   display: grid;
@@ -236,11 +255,16 @@
   transition: var(--transition);
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .favoriteCard:hover {
   box-shadow: var(--shadow-lg);
   transform: translateY(-4px);
+}
+
+.favoriteCard:hover .viewBtn {
+  opacity: 1;
 }
 
 .favoriteCard img {
@@ -273,6 +297,16 @@
   font-weight: 700;
   color: var(--primary-color);
   font-size: 1.1rem;
+}
+
+.favoriteCard .viewBtn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  opacity: 0;
+  transition: opacity var(--transition);
+  background: rgba(51, 65, 85, 0.9);
 }
 
 /* Settings */

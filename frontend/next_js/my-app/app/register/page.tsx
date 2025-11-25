@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { getCurrentUser } from "@/utils/auth";
 import Link from "next/link";
-import { User, Mail, Lock, Eye, EyeOff, ArrowRight, CheckCircle } from "lucide-react";
+import { User, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import styles from "../login/auth.module.css";
 import { toast } from "react-toastify";
+import { useLocale } from "@/contexts/LocaleContext";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useLocale();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,22 +20,42 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [validations, setValidations] = useState({
+    usernameLength: false,
+    emailValid: false,
     length: false,
-    uppercase: false,
-    number: false,
     match: false,
   });
 
   const { login } = useAuth();
 
   const validatePassword = (pwd: string, cfm: string) => {
-    setValidations({
+    setValidations(prev => ({
+      ...prev,
       length: pwd.length >= 8,
-      uppercase: /[A-Z]/.test(pwd),
-      number: /[0-9]/.test(pwd),
       match: pwd === cfm && pwd.length > 0,
-    });
+    }));
+  };
+
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const uname = e.target.value;
+    setUsername(uname);
+    setValidations(prev => ({
+      ...prev,
+      usernameLength: uname.length >= 3 && uname.length <= 30,
+    }));
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const em = e.target.value;
+    setEmail(em);
+    // Email regex: требует точку в домене
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    setValidations(prev => ({
+      ...prev,
+      emailValid: emailRegex.test(em),
+    }));
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,9 +72,10 @@ export default function RegisterPage() {
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
+    setSubmitted(true);
 
-    if (!validations.length || !validations.uppercase || !validations.number || !validations.match) {
-      toast.error("Пожалуйста, проверьте требования к паролю");
+    if (!validations.usernameLength || !validations.emailValid || !validations.length || !validations.match) {
+      toast.error(t('register.messages.checkRequirements'));
       return;
     }
 
@@ -70,7 +93,7 @@ export default function RegisterPage() {
 
       if (!regRes.ok) {
         const txt = await regRes.text().catch(() => "");
-        throw new Error(txt || "Ошибка при регистрации");
+        throw new Error(txt || t('register.messages.registrationError'));
       }
 
       const loginRes = await fetch("http://localhost:5200/api/auth/login", {
@@ -81,8 +104,8 @@ export default function RegisterPage() {
       });
 
       if (!loginRes.ok) {
-        toast.success("Регистрация успешна! Пожалуйста, выполните вход.");
-        setTimeout(() => router.push("/login"), 1500);
+        toast.success(t('register.messages.registrationSuccess'));
+        router.push("/login");
         return;
       }
 
@@ -91,10 +114,10 @@ export default function RegisterPage() {
         login(user);
       }
 
-      toast.success("Добро пожаловать! Перенаправление на профиль...");
-      setTimeout(() => router.push("/profile"), 1000);
+      toast.success(t('register.messages.welcome'));
+      router.push("/profile");
     } catch (err: any) {
-      toast.error(err.message || "Неизвестная ошибка");
+      toast.error(err.message || t('register.messages.unknownError'));
     } finally {
       setLoading(false);
     }
@@ -108,19 +131,19 @@ export default function RegisterPage() {
           <div className={styles.brandContent}>
             <div className={styles.logo}>🛒</div>
             <h1>OnlineStore</h1>
-            <p>Присоединитесь к нам и наслаждайтесь лучшими товарами</p>
+            <p>{t('register.tagline')}</p>
             <div className={styles.benefits}>
               <div className={styles.benefitItem}>
                 <span>✓</span>
-                <span>Создайте учетную запись за 2 минуты</span>
+                <span>{t('register.benefits.signup')}</span>
               </div>
               <div className={styles.benefitItem}>
                 <span>✓</span>
-                <span>Сохраняйте избранные товары</span>
+                <span>{t('register.benefits.favorites')}</span>
               </div>
               <div className={styles.benefitItem}>
                 <span>✓</span>
-                <span>Отслеживайте ваши заказы</span>
+                <span>{t('register.benefits.tracking')}</span>
               </div>
             </div>
           </div>
@@ -130,26 +153,32 @@ export default function RegisterPage() {
         <div className={styles.formSide}>
           <div className={styles.formCard}>
             <div className={styles.formHeader}>
-              <h2>Создать аккаунт</h2>
-              <p>Заполните форму ниже</p>
+              <h2>{t('register.title')}</h2>
+              <p>{t('register.subtitle')}</p>
             </div>
 
             <form onSubmit={handleRegister} className={styles.form}>
               {/* Username */}
               <div className={styles.formGroup}>
-                <label htmlFor="username">Имя пользователя</label>
+                <label htmlFor="username">{t('register.username')}</label>
                 <div className={styles.inputWrapper}>
                   <User size={20} className={styles.icon} />
                   <input
                     id="username"
                     type="text"
-                    placeholder="john_doe"
+                    placeholder={t('register.usernamePlaceholder')}
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={handleUsernameChange}
                     required
-                    autoComplete="username"
                   />
                 </div>
+                {username && (
+                  <div style={{ marginTop: "0.5rem", fontSize: "0.8rem", color: "var(--text-light)" }}>
+                    <span style={{ color: validations.usernameLength ? "var(--success-color)" : "var(--danger-color, #ef4444)" }}>
+                      ✓ 3-30 символов
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Email */}
@@ -159,19 +188,25 @@ export default function RegisterPage() {
                   <Mail size={20} className={styles.icon} />
                   <input
                     id="email"
-                    type="email"
-                    placeholder="you@example.com"
+                    type="text"
+                    placeholder={t('register.emailPlaceholder')}
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={handleEmailChange}
                     required
-                    autoComplete="email"
                   />
                 </div>
+                {email && (
+                  <div style={{ marginTop: "0.5rem", fontSize: "0.8rem", color: "var(--text-light)" }}>
+                    <span style={{ color: validations.emailValid ? "var(--success-color)" : "var(--danger-color, #ef4444)" }}>
+                      ✓ Формат: user@domain.extension
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Password */}
               <div className={styles.formGroup}>
-                <label htmlFor="password">Пароль</label>
+                <label htmlFor="password">{t('register.password')}</label>
                 <div className={styles.inputWrapper}>
                   <Lock size={20} className={styles.icon} />
                   <input
@@ -181,7 +216,6 @@ export default function RegisterPage() {
                     value={password}
                     onChange={handlePasswordChange}
                     required
-                    autoComplete="new-password"
                   />
                   <button
                     type="button"
@@ -191,18 +225,18 @@ export default function RegisterPage() {
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
-
-                {/* Password Requirements */}
-                <div style={{ marginTop: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  <RequirementItem met={validations.length} label="Минимум 8 символов" />
-                  <RequirementItem met={validations.uppercase} label="Хотя бы одна заглавная буква" />
-                  <RequirementItem met={validations.number} label="Хотя бы одна цифра" />
-                </div>
+                {password && (
+                  <div style={{ marginTop: "0.5rem", fontSize: "0.8rem", color: "var(--text-light)" }}>
+                    <span style={{ color: validations.length ? "var(--success-color)" : "var(--danger-color, #ef4444)" }}>
+                      ✓ Минимум 8 символов
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Confirm Password */}
               <div className={styles.formGroup}>
-                <label htmlFor="confirm">Подтвердить пароль</label>
+                <label htmlFor="confirm">{t('register.confirmPassword')}</label>
                 <div className={styles.inputWrapper}>
                   <Lock size={20} className={styles.icon} />
                   <input
@@ -212,7 +246,6 @@ export default function RegisterPage() {
                     value={confirm}
                     onChange={handleConfirmChange}
                     required
-                    autoComplete="new-password"
                   />
                   <button
                     type="button"
@@ -222,7 +255,13 @@ export default function RegisterPage() {
                     {showConfirm ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
-                <RequirementItem met={validations.match} label="Пароли совпадают" />
+                {confirm && (
+                  <div style={{ marginTop: "0.5rem", fontSize: "0.8rem", color: "var(--text-light)" }}>
+                    <span style={{ color: validations.match ? "var(--success-color)" : "var(--danger-color, #ef4444)" }}>
+                      ✓ Пароли совпадают
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Submit Button */}
@@ -231,7 +270,7 @@ export default function RegisterPage() {
                   <span className={styles.loading} />
                 ) : (
                   <>
-                    <span>Создать аккаунт</span>
+                    <span>{t('register.submit')}</span>
                     <ArrowRight size={20} />
                   </>
                 )}
@@ -240,27 +279,11 @@ export default function RegisterPage() {
 
             {/* Login Link */}
             <div className={styles.signUpLink}>
-              <p>Уже есть аккаунт? <Link href="/login">Войти</Link></p>
+              <p>{t('register.hasAccount')} <Link href="/login">{t('register.login')}</Link></p>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function RequirementItem({ met, label }: { met: boolean; label: string }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem" }}>
-      <CheckCircle
-        size={16}
-        style={{
-          color: met ? "var(--success-color)" : "var(--border-color)",
-          flexShrink: 0,
-        }}
-        fill={met ? "currentColor" : "none"}
-      />
-      <span style={{ color: met ? "var(--success-color)" : "var(--text-light)" }}>{label}</span>
     </div>
   );
 }

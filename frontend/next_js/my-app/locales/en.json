@@ -96,8 +96,8 @@
       "saveFail": "Failed to save category"
     },
     "overview": {
-      "errorLoad": "Failed to load overview",
-      "loading": "Loading overview...",
+      "errorLoad": "Failed to load statistics",
+      "loading": "Loading statistics...",
       "stats": {
         "users": "Users",
         "products": "Products",
@@ -106,8 +106,11 @@
       },
       "analytics": "Analytics",
       "charts": {
-        "sales": "Sales",
-        "categories": "Categories"
+        "sales": "Sales (last 7 days)",
+        "salesLabel": "Quantity",
+        "revenueLabel": "Revenue ($)",
+        "categories": "Category Distribution",
+        "salesByDay": "Sales by day"
       },
       "recentOrders": "Recent orders",
       "table": {
@@ -220,6 +223,12 @@
     "empty": {
       "title": "Products not found",
       "description": "Try changing your search or filter parameters"
+    },
+    "authModal": {
+      "title": "Authorization required",
+      "message": "Please log in to your account to add products to favorites and make purchases",
+      "cancelBtn": "Close",
+      "loginBtn": "Go to login"
     }
   },
   "cart": {
@@ -261,12 +270,80 @@
     "backLink": "Back to catalog",
     "description": { "title": "Description" },
     "addToCart": "Add to cart",
+    "savings": "Save 20%",
     "features": {
       "fastDelivery": { "title": "Fast delivery", "text": "Within 24-48 hours" },
       "freeShipping": { "title": "Free shipping", "text": "On orders over $100" },
       "warranty": { "title": "Warranty", "text": "2 years" }
     },
-    "related": { "title": "Related products" }
+    "related": { "title": "Related products" },
+    "authModal": {
+      "title": "Authorization required",
+      "message": "Please log in to your account to add products to favorites and make purchases",
+      "cancelBtn": "Close",
+      "loginBtn": "Go to login"
+    }
+  },
+  "authModal": {
+    "title": "Authorization required",
+    "message": "Please log in to your account to add products to favorites and make purchases",
+    "cancelBtn": "Close",
+    "loginBtn": "Go to login"
+  },
+  "login": {
+    "title": "Sign In",
+    "subtitle": "Enter your credentials",
+    "tagline": "Your trusted electronics online store",
+    "benefits": {
+      "delivery": "Fast delivery",
+      "prices": "Best prices",
+      "quality": "Quality guarantee"
+    },
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "remember": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "submit": "Sign In",
+    "noAccount": "No account?",
+    "register": "Sign up",
+    "messages": {
+      "success": "✅ Signed in successfully!",
+      "error": "Login error: ",
+      "invalidCredentials": "You entered an incorrect email or password"
+    }
+  },
+  "register": {
+    "title": "Create Account",
+    "subtitle": "Fill in the form below",
+    "tagline": "Join us and enjoy the best products",
+    "benefits": {
+      "signup": "Create an account in 2 minutes",
+      "favorites": "Save your favorite products",
+      "tracking": "Track your orders"
+    },
+    "username": "Username",
+    "usernamePlaceholder": "john_doe",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "submit": "Create Account",
+    "hasAccount": "Already have an account?",
+    "login": "Sign in",
+    "passwordRequirements": {
+      "length": "Minimum 8 characters",
+      "uppercase": "At least one uppercase letter",
+      "number": "At least one number",
+      "match": "Passwords match"
+    },
+    "messages": {
+      "checkRequirements": "Please check password requirements",
+      "registrationError": "Registration error",
+      "registrationSuccess": "Registration successful! Please sign in.",
+      "welcome": "Welcome! Redirecting to profile...",
+      "unknownError": "Unknown error"
+    }
   },
   "profile": {
     "notAuthorized": {
