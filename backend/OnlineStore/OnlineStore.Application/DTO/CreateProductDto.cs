@@ -1,24 +1,25 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace OnlineStore.Application.DTO;
-
-public class CreateProductDto
+namespace OnlineStore.Application.DTO
 {
-    [Required]
-    [MaxLength(50)]
-    public string Name { get; set; } = default!;
+    public class CreateProductDto
+    {
+        [Required]
+        [MaxLength(50)]
+        public string Name { get; set; } = default!;
 
-    [Required]
-    [MaxLength(500)]
-    public string Description { get; set; } = default!;
+        [Required]
+        [MaxLength(300)]
+        public string Description { get; set; } = default!;
 
-    [Range(0.01, 100000)]
-    public decimal Price { get; set; }
+        [Range(0.01, 100000)]
+        public decimal Price { get; set; }
 
-    [Required]
-    [Url]
-    public string ImageUrl { get; set; } = default!;
+        [Required]
+        [Url]
+        public string ImageUrl { get; set; } = default!;
 
-    [Required]
-    public Guid CategoryId { get; set; }
+        [Required]
+        public Guid CategoryId { get; set; }
+    }
 }
