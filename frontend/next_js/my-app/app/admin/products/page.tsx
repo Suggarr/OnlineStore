@@ -91,7 +91,7 @@ export default function AdminProducts() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t("admin.products.deleteConfirm", "Удалить товар?"))) return;
+    if (!confirm(t("admin.products.deleteConfirm", "Вы уверены, что хотите удалить этот товар?"))) return;
     try {
       await apiClient.del(`/Products/${id}`);
       setProducts((prev) => prev.filter((p) => p.id !== id));
@@ -102,39 +102,39 @@ export default function AdminProducts() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.name || formData.name.length > 50) {
-      toast.warn("Название должно быть до 50 символов");
+    if (!formData.name || formData.name.length < 3 || formData.name.length > 100) {
+      toast.warn(t("admin.products.warn.name", "Название товара должно содержать от 3 до 100 символов"));
       return;
     }
-    if (!formData.description || formData.description.length > 500) {
-      toast.warn("Описание должно быть до 500 символов");
+    if (!formData.description || formData.description.length < 5 || formData.description.length > 500) {
+      toast.warn(t("admin.products.warn.description", "Описание товара должно содержать от 5 до 500 символов"));
       return;
     }
     if (!formData.price || formData.price < 0.01 || formData.price > 100000) {
-      toast.warn("Цена должна быть от 0.01 до 100000");
+      toast.warn(t("admin.products.warn.price", "Цена должна быть в диапазоне от 0.01 до 100000"));
       return;
     }
-    if (!formData.imageUrl || !/^https?:\/\/.+\..+/.test(formData.imageUrl)) {
-      toast.warn("Введите корректный URL изображения");
+    if (!formData.imageUrl || formData.imageUrl.length < 10 || formData.imageUrl.length > 300 || !/^https?:\/\/.+\..+/.test(formData.imageUrl)) {
+      toast.warn(t("admin.products.warn.imageUrl", "URL изображения должен быть валидным от 10 до 300 символов"));
       return;
     }
     if (!formData.categoryId) {
-      toast.warn("Выберите категорию");
+      toast.warn(t("admin.products.warn.category", "Категория обязательна"));
       return;
     }
 
     try {
       if (editingId) {
         await apiClient.put(`/Products/${editingId}`, formData);
-        toast.success("Товар обновлен");
+        toast.success(t("admin.products.updateSuccess", "Товар обновлен"));
       } else {
         await apiClient.post("/Products", formData);
-        toast.success("Товар добавлен");
+        toast.success(t("admin.products.addSuccess", "Товар добавлен"));
       }
       handleCloseModal();
       fetchProducts();
     } catch (err) {
-      toast.error("Ошибка сохранения");
+      toast.error(t("admin.products.saveFail", "Ошибка сохранения товара"));
     }
   };
 
@@ -182,20 +182,20 @@ export default function AdminProducts() {
         ) : products.length === 0 ? (
           <div className={styles.emptyState}>
             <div className={styles.emptyIcon}>📭</div>
-            <h3>Товары не найдены</h3>
-            <p>Добавьте первый товар</p>
+            <h3>{t("admin.products.notFoundTitle", "Товары не найдены")}</h3>
+            <p>{t("admin.products.notFoundText", "Добавьте первый товар нажав кнопку выше")}</p>
           </div>
         ) : (
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Фото</th>
-                  <th>Название</th>
-                  <th>Описание</th>
-                  <th>Категория</th>
-                  <th>Цена</th>
-                  <th>Действия</th>
+                  <th>{t("admin.products.table.photo", "Фото")}</th>
+                  <th>{t("admin.products.table.name", "Название")}</th>
+                  <th>{t("admin.products.table.description", "Описание")}</th>
+                  <th>{t("admin.products.table.category", "Категория")}</th>
+                  <th>{t("admin.products.table.price", "Цена")}</th>
+                  <th>{t("admin.products.table.actions", "Действия")}</th>
                 </tr>
               </thead>
 
@@ -239,12 +239,70 @@ export default function AdminProducts() {
                     </td>
 
                     <td>
-                      <div className={styles.actions}>
-                        <button className={styles.editBtn} onClick={() => handleOpenModal(p)}>
-                          <Edit2 size={16} />
+                      <div className={styles.actions} style={{ display: "flex", gap: "12px" }}>
+                        <button
+                          className={styles.editBtn}
+                          onClick={() => handleOpenModal(p)}
+                          title={t("common.edit", "Редактировать")}
+                          aria-label={t("common.edit", "Редактировать")}
+                          style={{
+                            padding: "10px 16px",
+                            borderRadius: "8px",
+                            backgroundColor: "#3498db",
+                            color: "#ffffff",
+                            border: "none",
+                            cursor: "pointer",
+                            transition: "background-color 0.3s ease, transform 0.1s ease",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            fontSize: "14px",
+                            fontWeight: "500",
+                            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)"
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "#2980b9";
+                            e.currentTarget.style.transform = "scale(1.05)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "#3498db";
+                            e.currentTarget.style.transform = "scale(1)";
+                          }}
+                        >
+                          <Edit2 size={20} />
+                          {t("common.edit", "Редактировать")}
                         </button>
-                        <button className={styles.deleteBtn} onClick={() => handleDelete(p.id)}>
-                          <Trash2 size={16} />
+                        <button
+                          className={styles.deleteBtn}
+                          onClick={() => handleDelete(p.id)}
+                          title={t("common.delete", "Удалить")}
+                          aria-label={t("common.delete", "Удалить")}
+                          style={{
+                            padding: "10px 16px",
+                            borderRadius: "8px",
+                            backgroundColor: "#e74c3c",
+                            color: "#ffffff",
+                            border: "none",
+                            cursor: "pointer",
+                            transition: "background-color 0.3s ease, transform 0.1s ease",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            fontSize: "14px",
+                            fontWeight: "500",
+                            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)"
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "#c0392b";
+                            e.currentTarget.style.transform = "scale(1.05)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "#e74c3c";
+                            e.currentTarget.style.transform = "scale(1)";
+                          }}
+                        >
+                          <Trash2 size={20} />
+                          {t("common.delete", "Удалить")}
                         </button>
                       </div>
                     </td>
@@ -261,7 +319,7 @@ export default function AdminProducts() {
           <div className={styles.modalContent}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1.5rem" }}>
               <h3 className={styles.modalHeader}>
-                {editingId ? "Редактировать товар" : "Добавить товар"}
+                {editingId ? t("admin.products.modal.edit", "Редактировать товар") : t("admin.products.modal.add", "Добавить товар")}
               </h3>
               <button onClick={handleCloseModal} style={{ background: "none", border: "none", cursor: "pointer" }}>
                 <X size={24} />
@@ -270,29 +328,29 @@ export default function AdminProducts() {
 
             <div className={styles.modalForm}>
               <div className={styles.formGroup}>
-                <label>Название</label>
-                <input type="text" maxLength={50} value={formData.name || ""} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                <label>{t("admin.products.fields.name", "Название")}</label>
+                <input type="text" maxLength={100} value={formData.name || ""} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder={t("admin.products.placeholders.name", "Название товара")} />
               </div>
 
               <div className={styles.formGroup}>
-                <label>Описание</label>
-                <textarea maxLength={300} rows={4} value={formData.description || ""} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+                <label>{t("admin.products.fields.description", "Описание")}</label>
+                <textarea maxLength={500} rows={4} value={formData.description || ""} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder={t("admin.products.placeholders.description", "Описание товара")} />
               </div>
 
               <div className={styles.formGroup}>
-                <label>Цена</label>
-                <input type="number" min={0.01} max={100000} step="0.01" value={formData.price || 0} onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })} />
+                <label>{t("admin.products.fields.price", "Цена")}</label>
+                <input type="number" min={0.01} max={100000} step="0.01" value={formData.price || 0} onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })} placeholder={t("admin.products.placeholders.price", "Цена")} />
               </div>
 
               <div className={styles.formGroup}>
-                <label>Ссылка на изображение</label>
-                <input type="url" value={formData.imageUrl || ""} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} />
+                <label>{t("admin.products.fields.imageUrl", "Ссылка на изображение")}</label>
+                <input type="url" maxLength={300} value={formData.imageUrl || ""} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} placeholder={t("admin.products.placeholders.imageUrl", "https://.../image.jpg")} />
               </div>
 
               <div className={styles.formGroup}>
-                <label>Категория</label>
+                <label>{t("admin.products.fields.category", "Категория")}</label>
                 <select value={formData.categoryId || ""} onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}>
-                  <option value="">Выберите категорию</option>
+                  <option value="">{t("admin.products.placeholders.chooseCategory", "Выберите категорию")}</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}
@@ -303,10 +361,10 @@ export default function AdminProducts() {
 
               <div className={styles.formActions}>
                 <button className={styles.submitBtn} onClick={handleSubmit}>
-                  {editingId ? "Сохранить" : "Добавить"}
+                  {editingId ? t("common.save", "Сохранить") : t("common.add", "Добавить")}
                 </button>
                 <button className={styles.cancelBtn} onClick={handleCloseModal}>
-                  Отмена
+                  {t("common.cancel", "Отмена")}
                 </button>
               </div>
             </div>

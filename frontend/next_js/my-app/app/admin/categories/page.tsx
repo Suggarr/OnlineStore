@@ -34,7 +34,7 @@ export default function AdminCategories() {
       const res = await apiClient.get<Category[]>("/Categories");
       setCategories(res.data || []);
     } catch (err) {
-      setError("Ошибка загрузки категорий");
+      setError(t("admin.categories.errorLoad", "Ошибка загрузки категорий"));
     } finally {
       setLoading(false);
     }
@@ -62,41 +62,46 @@ export default function AdminCategories() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Удалить категорию?")) return;
+    if (!confirm(t("admin.categories.deleteConfirm", "Вы уверены, что хотите удалить эту категорию?"))) return;
 
     try {
       await apiClient.del(`/Categories/${id}`);
       setCategories((prev) => prev.filter((x) => x.id !== id));
-      toast.success("Категория удалена");
+      toast.success(t("admin.categories.deleteSuccess", "Категория удалена"));
     } catch (err) {
-      toast.error("Ошибка удаления");
+      toast.error(t("admin.categories.deleteFail", "Ошибка удаления категории"));
     }
   };
 
   const handleSubmit = async () => {
-    if (!formData.name || formData.name.length > 50) {
-      toast.warn("Название должно быть до 50 символов");
+    if (!formData.name || formData.name.length < 3 || formData.name.length > 100) {
+      toast.warn(t("admin.categories.warn.name", "Название категории должно содержать от 3 до 100 символов"));
       return;
     }
 
-    if (!formData.image || !/^https?:\/\/.+\..+/.test(formData.image)) {
-      toast.warn("Введите корректный URL изображения");
+    if (!formData.description || formData.description.length < 5 || formData.description.length > 600) {
+      toast.warn(t("admin.categories.warn.description", "Описание должно содержать от 5 до 600 символов"));
+      return;
+    }
+
+    if (!formData.image || formData.image.length < 10 || formData.image.length > 300 || !/^https?:\/\/.+\..+/.test(formData.image)) {
+      toast.warn(t("admin.categories.warn.image", "Ссылка на изображение должна быть валидным URL от 10 до 300 символов"));
       return;
     }
 
     try {
       if (editingId) {
         await apiClient.put(`/Categories/${editingId}`, formData);
-        toast.success("Категория обновлена");
+        toast.success(t("admin.categories.updateSuccess", "Категория обновлена"));
       } else {
         await apiClient.post("/Categories", formData);
-        toast.success("Категория добавлена");
+        toast.success(t("admin.categories.addSuccess", "Категория добавлена"));
       }
 
       fetchCategories();
       handleCloseModal();
     } catch (err) {
-      toast.error("Ошибка сохранения");
+      toast.error(t("admin.categories.saveFail", "Ошибка сохранения категории"));
     }
   };
 
@@ -115,11 +120,11 @@ export default function AdminCategories() {
         >
           <h2 className={styles.sectionTitle}>
             <FolderTree size={24} />
-            Управление категориями
+            {t("admin.categories.title", "Управление категориями")}
           </h2>
 
           <button className={styles.addBtn} onClick={() => handleOpenModal()}>
-            <Plus size={18} /> Добавить категорию
+            <Plus size={18} /> {t("admin.categories.addCategory", "Добавить категорию")}
           </button>
         </div>
 
@@ -140,23 +145,23 @@ export default function AdminCategories() {
         {loading ? (
           <div className={styles.loading}>
             <div className={styles.spinner}></div>
-            <p>Загрузка категорий...</p>
+            <p>{t("admin.categories.loading", "Загрузка категорий...")}</p>
           </div>
         ) : categories.length === 0 ? (
           <div className={styles.emptyState}>
             <div className={styles.emptyIcon}>📭</div>
-            <h3>Категорий нет</h3>
-            <p>Добавьте первую категорию</p>
+            <h3>{t("admin.categories.notFoundTitle", "Категории не найдены")}</h3>
+            <p>{t("admin.categories.notFoundText", "Добавьте первую категорию нажав кнопку выше")}</p>
           </div>
         ) : (
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Фото</th>
-                  <th>Название</th>
-                  <th>Описание</th>
-                  <th>Действия</th>
+                  <th>{t("admin.categories.table.photo", "Фото")}</th>
+                  <th>{t("admin.categories.table.name", "Название")}</th>
+                  <th>{t("admin.categories.table.description", "Описание")}</th>
+                  <th>{t("admin.categories.table.actions", "Действия")}</th>
                 </tr>
               </thead>
 
@@ -194,19 +199,70 @@ export default function AdminCategories() {
                     </td>
 
                     <td>
-                      <div className={styles.actions}>
-                        <button
-                          className={styles.editBtn}
+                      <div className={styles.actions} style={{ display: "flex", gap: "12px" }}>
+                        <button 
+                          className={styles.editBtn} 
                           onClick={() => handleOpenModal(c)}
+                          title={t("common.edit", "Редактировать")}
+                          aria-label={t("common.edit", "Редактировать")}
+                          style={{
+                            padding: "10px 16px",
+                            borderRadius: "8px",
+                            backgroundColor: "#3498db",
+                            color: "#ffffff",
+                            border: "none",
+                            cursor: "pointer",
+                            transition: "background-color 0.3s ease, transform 0.1s ease",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            fontSize: "14px",
+                            fontWeight: "500",
+                            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)"
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "#2980b9";
+                            e.currentTarget.style.transform = "scale(1.05)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "#3498db";
+                            e.currentTarget.style.transform = "scale(1)";
+                          }}
                         >
-                          <Edit2 size={16} />
+                          <Edit2 size={20} />
+                          {t("common.edit", "Редактировать")}
                         </button>
-
-                        <button
-                          className={styles.deleteBtn}
+                        <button 
+                          className={styles.deleteBtn} 
                           onClick={() => handleDelete(c.id)}
+                          title={t("common.delete", "Удалить")}
+                          aria-label={t("common.delete", "Удалить")}
+                          style={{
+                            padding: "10px 16px",
+                            borderRadius: "8px",
+                            backgroundColor: "#e74c3c",
+                            color: "#ffffff",
+                            border: "none",
+                            cursor: "pointer",
+                            transition: "background-color 0.3s ease, transform 0.1s ease",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            fontSize: "14px",
+                            fontWeight: "500",
+                            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)"
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "#c0392b";
+                            e.currentTarget.style.transform = "scale(1.05)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "#e74c3c";
+                            e.currentTarget.style.transform = "scale(1)";
+                          }}
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={20} />
+                          {t("common.delete", "Удалить")}
                         </button>
                       </div>
                     </td>
@@ -229,7 +285,7 @@ export default function AdminCategories() {
               }}
             >
               <h3 className={styles.modalHeader}>
-                {editingId ? "Редактировать категорию" : "Добавить категорию"}
+                {editingId ? t("admin.categories.modal.edit", "Редактировать категорию") : t("admin.categories.modal.add", "Добавить категорию")}
               </h3>
 
               <button
@@ -246,19 +302,20 @@ export default function AdminCategories() {
 
             <div className={styles.modalForm}>
               <div className={styles.formGroup}>
-                <label>Название</label>
+                <label>{t("admin.categories.fields.name", "Название")}</label>
                 <input
                   type="text"
-                  maxLength={50}
+                  maxLength={100}
                   value={formData.name || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
+                  placeholder={t("admin.categories.placeholders.name", "Название категории")}
                 />
               </div>
 
               <div className={styles.formGroup}>
-                <label>Описание</label>
+                <label>{t("admin.categories.fields.description", "Описание")}</label>
                 <textarea
                   maxLength={600}
                   rows={4}
@@ -266,27 +323,30 @@ export default function AdminCategories() {
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
+                  placeholder={t("admin.categories.placeholders.description", "Описание категории")}
                 ></textarea>
               </div>
 
               <div className={styles.formGroup}>
-                <label>URL изображения</label>
+                <label>{t("admin.categories.fields.image", "Ссылка на изображение")}</label>
                 <input
                   type="url"
+                  maxLength={300}
                   value={formData.image || ""}
                   onChange={(e) =>
                     setFormData({ ...formData, image: e.target.value })
                   }
+                  placeholder={t("admin.categories.placeholders.image", "https://.../image.jpg")}
                 />
               </div>
 
               <div className={styles.formActions}>
                 <button className={styles.submitBtn} onClick={handleSubmit}>
-                  {editingId ? "Сохранить" : "Добавить"}
+                  {editingId ? t("common.save", "Сохранить") : t("common.add", "Добавить")}
                 </button>
 
                 <button className={styles.cancelBtn} onClick={handleCloseModal}>
-                  Отмена
+                  {t("common.cancel", "Отмена")}
                 </button>
               </div>
             </div>
