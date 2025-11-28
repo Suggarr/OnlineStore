@@ -73,16 +73,6 @@ namespace OnlineStore.Application.Services
             return true;
         }
 
-        //public async Task<bool> UpdateQuantityAsync(Guid id, int quantity, Guid userId)
-        //{
-        //    var item = await _cartRepository.GetByIdAsync(id, userId);
-        //    if (item == null)
-        //        return false;
-
-        //    await _cartRepository.UpdateQuantityAsync(id, quantity, userId);
-        //    return true;
-        //}
-
         public async Task<bool> UpdateQuantityAsync(Guid id, int quantity, Guid userId)
         {
             var item = await _cartRepository.GetByIdAsync(id, userId);

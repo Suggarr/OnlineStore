@@ -29,7 +29,7 @@ namespace OnlineStore.Application.Services
             var user = new User
             {
                 UserName = dto.Username,
-                Email = dto.Email,
+                Email = dto.Email.ToLowerInvariant(),
                 PasswordHash = await _passwordHasher.HashPassword(dto.Password),
             };
 
@@ -90,7 +90,7 @@ namespace OnlineStore.Application.Services
             var user = await _userRepository.GetByIdAsync(id);
             if (user == null) return false;
 
-            if (user.Email != dto.Email)
+            if (!string.Equals(user.Email, dto.Email, StringComparison.OrdinalIgnoreCase))
             {
                 var emailExists = await _userRepository.ExistsByEmailAsync(dto.Email);
                 if (emailExists)
@@ -105,7 +105,7 @@ namespace OnlineStore.Application.Services
             }
 
             user.UserName = dto.Username;
-            user.Email = dto.Email;
+            user.Email = dto.Email.ToLowerInvariant();
 
             await _userRepository.UpdateAsync(user);
             return true;
@@ -124,10 +124,7 @@ namespace OnlineStore.Application.Services
             {
                 throw new InvalidOperationException("Старый пароль неверный.");
             }
-            //if (user == null || !await _passwordHasher.VerifyPassword(user.PasswordHash, updateUserPasswordDto.OldPassword))
-            //{
-            //    throw new InvalidOperationException();
-            //}
+
             user.PasswordHash = await _passwordHasher.HashPassword(updateUserPasswordDto.NewPassword);
             await _userRepository.UpdateAsync(user);
         }

@@ -37,7 +37,8 @@ public class UserRepository : IUserRepository
 
     public async Task<User?> GetByEmailAsync(string email)
     {
-        return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        var normalizedEmail = email.ToLowerInvariant();
+        return await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail);
     }
 
     public async Task<User?> GetByIdAsync(Guid id)
@@ -58,7 +59,8 @@ public class UserRepository : IUserRepository
 
     public async Task<bool> ExistsByEmailAsync(string email)
     {
-        return await _context.Users.AnyAsync(u => u.Email == email);
+        var normalizedEmail = email.ToLowerInvariant();
+        return await _context.Users.AnyAsync(u => u.Email.ToLower() == normalizedEmail);
     }
 
     public async Task<bool> ExistsByUsernameAsync(string username)
