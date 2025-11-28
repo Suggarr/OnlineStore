@@ -4,11 +4,11 @@ namespace OnlineStore.Application.DTO
 {
     public class UpdatePasswordDto
     {
-        [Required]
+        [Required(ErrorMessage = "Старый пароль обязателен.")]
         public string OldPassword { get; set; } = default!;
 
-        [Required]
-        [MinLength(8, ErrorMessage = "Пароль должен содержать минимум 8 символов.")]//Пароль должен быть не короче 8 символов
+        [Required(ErrorMessage = "Новый пароль обязателен.")]
+        [StringLength(100, MinimumLength = 8, ErrorMessage = "Новый пароль должен содержать от 8 до 100 символов.")]
         public string NewPassword { get; set; } = default!;
     }
 }

@@ -1,25 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace OnlineStore.Application.DTO
 {
     public class RegisterUserDto
     {
-        [Required]
+        [Required(ErrorMessage = "Имя пользователя обязательно.")]
         [StringLength(30, MinimumLength = 3, ErrorMessage = "Имя пользователя должно содержать от 3 до 30 символов.")]
         public string Username { get; set; } = string.Empty;
 
-        [Required]
+        [Required(ErrorMessage = "Email обязателен.")]
         [EmailAddress(ErrorMessage = "Введите корректный email.")]
         public string Email { get; set; } = string.Empty;
 
-        [Required]
-        [MinLength(8, ErrorMessage = "Пароль должен содержать минимум 8 символов.")]//Пароль должен быть не короче 8 символов
+        [Required(ErrorMessage = "Пароль обязателен.")]
+        [StringLength(100, MinimumLength = 8, ErrorMessage = "Пароль должен содержать от 8 до 100 символов.")]
         public string Password { get; set; } = string.Empty;
-
     }
 }

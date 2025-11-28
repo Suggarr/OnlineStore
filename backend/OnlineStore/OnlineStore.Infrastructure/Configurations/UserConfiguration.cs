@@ -13,14 +13,15 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.Property(u => u.UserName)
             .IsRequired()
-            .HasMaxLength(100);
+            .HasMaxLength(30);
 
         builder.Property(u => u.Email)
             .IsRequired()
             .HasMaxLength(150);
 
         builder.Property(u => u.PasswordHash)
-            .IsRequired();
+            .IsRequired()
+            .HasMaxLength(100);
 
         builder.Property(u => u.Role)
             .HasConversion<string>() // хранить как строку

@@ -9,8 +9,8 @@ namespace OnlineStore.Application.DTO
 {
     public class UpdateCartItemQuantityDto
     {
-        [Required]
-        //[Range(1, 10, ErrorMessage = "Количество должно быть от 1 до 10.")]
+        [Required(ErrorMessage = "Количество обязательно.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Количество должно быть не меньше 1.")]
         public int Quantity { get; set; }
     }
 }

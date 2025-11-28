@@ -101,6 +101,11 @@ namespace OnlineStore.API.Controllers
             if (Guid.TryParse(userId, out Guid UserId))
             {
                 _logger.LogInformation($"Пользователь с Id {UserId} обновляет свой пароль");
+                if (!ModelState.IsValid)
+                {
+                    _logger.LogWarning("Ошибка валидации данных при смене пароля");
+                    return BadRequest(ModelState);
+                }
                 try
                 {
                     await _userService.UpdatePasswordAsync(UserId, updatePasswordDto);

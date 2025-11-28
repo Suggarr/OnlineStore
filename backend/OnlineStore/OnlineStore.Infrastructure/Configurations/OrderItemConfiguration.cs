@@ -20,7 +20,7 @@ namespace OnlineStore.Infrastructure.Configurations
 
             builder.Property(oi => oi.ProductName)
                    .IsRequired()
-                   .HasMaxLength(255);
+                   .HasMaxLength(100);
 
             builder.Property(oi => oi.Price)
                    .HasColumnType("decimal(18,2)")
