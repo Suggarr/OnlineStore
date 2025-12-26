@@ -458,6 +458,9 @@
       "profileUpdated": "Профиль успешно обновлён",
       "updateError": "Ошибка обновления профиля",
       "fillAllFields": "Заполните все поля",
+      "usernameLength": "Имя пользователя должно содержать от 3 до 30 символов",
+      "invalidEmail": "Введите корректный email",
+      "passwordLength": "Новый пароль должен содержать от 8 до 100 символов",
       "passwordsMismatch": "Пароли не совпадают",
       "passwordChanged": "Пароль успешно изменён",
       "passwordError": "Ошибка при смене пароля"

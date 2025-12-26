@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using OnlineStore.Application.DTO;
 using OnlineStore.Application.Interfaces;
 
-namespace OnlineStore.WebAPI.Controllers
+namespace OnlineStore.API.Controllers
 {
     [Authorize(Policy = "AdminPolicy")]
     [ApiController]

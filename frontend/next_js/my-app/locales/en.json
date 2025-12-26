@@ -459,6 +459,9 @@
       "profileUpdated": "Profile updated successfully",
       "updateError": "Error updating profile",
       "fillAllFields": "Fill all fields",
+      "usernameLength": "Username must contain 3 to 30 characters",
+      "invalidEmail": "Enter a valid email",
+      "passwordLength": "New password must contain 8 to 100 characters",
       "passwordsMismatch": "Passwords don't match",
       "passwordChanged": "Password changed successfully",
       "passwordError": "Error changing password"

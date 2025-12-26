@@ -5,6 +5,7 @@ import { ToastContainer } from "react-toastify";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LocaleProvider } from "@/contexts/LocaleContext";
 import Footer from "@/components/Footer";
+import Snow from "@/components/Snow";
 
 export const metadata: Metadata = {
   title: "OnlineStore — Электроника",
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <AuthProvider>
           <LocaleProvider>
+            <Snow />
             <ToastContainer position="bottom-right" autoClose={3000} theme="colored" />
             <Header />
             <main>{children}</main>

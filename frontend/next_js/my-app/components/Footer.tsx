@@ -11,7 +11,6 @@ export default function Footer() {
     <footer className={styles.footer}>
       <div className={styles.container}>
         <div className={styles.content}>
-          {/* Company Info */}
           <div className={styles.section}>
             <h4>{t("footer.brand", "OnlineStore")}</h4>
             <p>{t("footer.tagline", "Ваш надежный интернет-магазин электроники с лучшими ценами и широким ассортиментом товаров.")}</p>
@@ -31,7 +30,6 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Navigation */}
           <div className={styles.section}>
             <h4>{t("footer.navigationTitle", "Навигация")}</h4>
             <ul className={styles.linksList}>
@@ -50,7 +48,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Support */}
           <div className={styles.section}>
             <h4>{t("footer.supportTitle", "Поддержка")}</h4>
             <ul className={styles.linksList}>
@@ -69,7 +66,6 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact Info */}
           <div className={styles.section}>
             <h4>{t("footer.contactTitle", "Контакты")}</h4>
             <div className={styles.contactItem}>
@@ -91,7 +87,6 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom */}
         <div className={styles.bottom}>
           <p>&copy; 2025 {t("footer.brand", "OnlineStore")} — {t("footer.rights", "Все права защищены.")}</p>
           <div className={styles.links}>

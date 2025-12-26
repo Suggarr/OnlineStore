@@ -102,6 +102,16 @@ export default function ProfilePage() {
 
   const handleProfileSave = async () => {
     if (!user) return;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (editUsername.length < 3 || editUsername.length > 30) {
+      toast.error(t("profile.messages.usernameLength", "Имя пользователя должно содержать от 3 до 30 символов"));
+      return;
+    }
+    if (!emailRegex.test(editEmail)) {
+      toast.error(t("profile.messages.invalidEmail", "Введите корректный email"));
+      return;
+    }
+
     try {
       const updatedUser = await updateUserProfile({ username: editUsername, email: editEmail });
       if (updatedUser) {
@@ -118,6 +128,10 @@ export default function ProfilePage() {
   const handlePasswordChange = async () => {
     if (!oldPassword || !newPassword || !confirmPassword) {
       toast.error(t("profile.messages.fillAllFields", "Заполните все поля"));
+      return;
+    }
+    if (newPassword.length < 8 || newPassword.length > 100) {
+      toast.error(t("profile.messages.passwordLength", "Новый пароль должен содержать от 8 до 100 символов"));
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -338,6 +352,9 @@ export default function ProfilePage() {
                   onChange={(e) => setEditUsername(e.target.value)}
                   placeholder={t("profile.modals.usernamePlaceholder", "Введите имя")}
                 />
+                {editUsername.length > 0 && (editUsername.length < 3 || editUsername.length > 30) && (
+                  <p className={styles.fieldError}>{t("profile.messages.usernameLength", "Имя пользователя должно содержать от 3 до 30 символов")}</p>
+                )}
               </div>
 
               <div className={styles.formGroup}>
@@ -348,13 +365,16 @@ export default function ProfilePage() {
                   onChange={(e) => setEditEmail(e.target.value)}
                   placeholder={t("profile.modals.emailPlaceholder", "Введите email")}
                 />
+                {editEmail.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail) && (
+                  <p className={styles.fieldError}>{t("profile.messages.invalidEmail", "Введите корректный email")}</p>
+                )}
               </div>
 
               <div className={styles.modalActions}>
                 <button className={styles.btnSecondary} onClick={() => setIsEditModalOpen(false)}>
                   {t("profile.modals.cancelBtn", "Отмена")}
                 </button>
-                <button className={styles.btnPrimary} onClick={handleProfileSave}>
+                <button className={styles.btnPrimary} onClick={handleProfileSave} disabled={!(editUsername.length >= 3 && editUsername.length <= 30 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail) && (editUsername !== user.username || editEmail !== user.email))}>
                   {t("profile.modals.saveBtn", "Сохранить изменения")}
                 </button>
               </div>
@@ -393,6 +413,9 @@ export default function ProfilePage() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••"
                 />
+                {newPassword.length > 0 && (newPassword.length < 8 || newPassword.length > 100) && (
+                  <p className={styles.fieldError}>{t("profile.messages.passwordLength", "Новый пароль должен содержать от 8 до 100 символов")}</p>
+                )}
               </div>
 
               <div className={styles.formGroup}>
@@ -409,7 +432,7 @@ export default function ProfilePage() {
                 <button className={styles.btnSecondary} onClick={() => setIsPasswordModalOpen(false)}>
                   {t("profile.modals.cancelBtn", "Отмена")}
                 </button>
-                <button className={styles.btnPrimary} onClick={handlePasswordChange}>
+                <button className={styles.btnPrimary} onClick={handlePasswordChange} disabled={!(oldPassword && newPassword.length >= 8 && newPassword.length <= 100 && newPassword === confirmPassword)}>
                   {t("profile.modals.changePasswordBtn", "Изменить пароль")}
                 </button>
               </div>
